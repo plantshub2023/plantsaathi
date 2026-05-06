@@ -50,7 +50,8 @@ export default function AddPlant() {
   const [nameFocused,  setNameFocused]  = useState(false)
   const [notesFocused, setNotesFocused] = useState(false)
 
-  const fileRef = useRef(null)
+  const cameraInputRef  = useRef(null)
+  const galleryInputRef = useRef(null)
   const navigate = useNavigate()
   const { addPlant } = useStorage()
 
@@ -200,7 +201,6 @@ export default function AddPlant() {
 
         {/* Upload zone */}
         <div
-          onClick={() => fileRef.current?.click()}
           style={{
             height:         '240px',
             borderRadius:   'var(--radius)',
@@ -210,56 +210,103 @@ export default function AddPlant() {
             flexDirection:  'column',
             alignItems:     'center',
             justifyContent: 'center',
-            cursor:         'pointer',
+            cursor:         'default',
             overflow:       'hidden',
             transition:     'background 0.2s',
+            position:       'relative',
           }}
         >
           {photo ? (
-            <img
-              src={photo}
-              alt="Plant preview"
-              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-            />
+            <>
+              <img
+                src={photo}
+                alt="Plant preview"
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
+              <button
+                onClick={() => setPhoto(null)}
+                style={{
+                  position:     'absolute',
+                  bottom:       '12px',
+                  right:        '12px',
+                  background:   'rgba(0,0,0,0.55)',
+                  color:        '#fff',
+                  border:       'none',
+                  borderRadius: '99px',
+                  padding:      '6px 14px',
+                  fontSize:     '13px',
+                  fontFamily:   'var(--font-body)',
+                  fontWeight:   500,
+                  cursor:       'pointer',
+                }}
+              >
+                Retake
+              </button>
+            </>
           ) : (
             <>
-              <span style={{ fontSize: '48px', marginBottom: '12px' }}>📷</span>
+              <span style={{ fontSize: '40px', marginBottom: '10px' }}>🌿</span>
               <p style={{ margin: '0 0 4px', fontWeight: 500, fontSize: '15px', color: 'var(--green-dark)' }}>
-                Tap to add a photo
+                Add a plant photo
               </p>
-              <p style={{ margin: 0, fontSize: '13px', color: 'var(--muted)' }}>
+              <p style={{ margin: '0 0 16px', fontSize: '13px', color: 'var(--muted)' }}>
                 Optional
               </p>
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+                <button
+                  onClick={() => cameraInputRef.current?.click()}
+                  style={{
+                    flex:         1,
+                    padding:      '12px',
+                    background:   'var(--green)',
+                    color:        '#fff',
+                    border:       'none',
+                    borderRadius: '12px',
+                    fontSize:     '14px',
+                    fontWeight:   500,
+                    cursor:       'pointer',
+                    fontFamily:   'var(--font-body)',
+                  }}
+                >
+                  📷 Click Photo
+                </button>
+                <button
+                  onClick={() => galleryInputRef.current?.click()}
+                  style={{
+                    flex:         1,
+                    padding:      '12px',
+                    background:   '#fff',
+                    color:        'var(--green)',
+                    border:       '1.5px solid var(--green)',
+                    borderRadius: '12px',
+                    fontSize:     '14px',
+                    fontWeight:   500,
+                    cursor:       'pointer',
+                    fontFamily:   'var(--font-body)',
+                  }}
+                >
+                  🖼️ Add Photo
+                </button>
+              </div>
             </>
           )}
         </div>
 
         <input
-          ref={fileRef}
+          ref={cameraInputRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          style={{ display: 'none' }}
+          onChange={handleFile}
+        />
+        <input
+          ref={galleryInputRef}
           type="file"
           accept="image/*"
           style={{ display: 'none' }}
           onChange={handleFile}
         />
-
-        {photo && (
-          <button
-            onClick={() => setPhoto(null)}
-            style={{
-              display:         'block',
-              margin:          '12px auto 0',
-              background:      'none',
-              border:          'none',
-              color:           'var(--muted)',
-              fontSize:        '13px',
-              cursor:          'pointer',
-              textDecoration:  'underline',
-              fontFamily:      'var(--font-body)',
-            }}
-          >
-            Remove photo
-          </button>
-        )}
 
       </div>
 
