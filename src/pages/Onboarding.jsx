@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ZONES } from '../data/zones.js'
+import { ZONES, getZone } from '../data/zones.js'
 import { PLANTS } from '../data/plants.js'
 import { useStorage } from '../hooks/useStorage.js'
 
@@ -13,6 +13,9 @@ export default function Onboarding() {
   const [showDropdown, setShowDropdown]   = useState(false)
   const [selectedPlants, setSelectedPlants] = useState([])
   const [inputFocused, setInputFocused]   = useState(false)
+  const [locationLoading, setLocationLoading] = useState(false)
+  const [locationMessage, setLocationMessage] = useState('')
+  const [locationError,   setLocationError]   = useState('')
 
   const navigate    = useNavigate()
   const { saveUser } = useStorage()
@@ -59,6 +62,136 @@ export default function Onboarding() {
       joinedDate: new Date().toISOString(),
     })
     navigate('/garden')
+  }
+
+  // ─── Location detection ──────────────────────────────────────────────────────
+
+  async function detectLocation() {
+    setLocationLoading(true)
+    setLocationError('')
+    setLocationMessage('')
+
+    if (!navigator.geolocation) {
+      setLocationError('Location not supported on this device')
+      setLocationLoading(false)
+      return
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const { latitude, longitude } = position.coords
+
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`,
+            { headers: { 'Accept-Language': 'en' } }
+          )
+          const data = await res.json()
+
+          const placeName =
+            data.address.village ||
+            data.address.hamlet ||
+            data.address.suburb ||
+            data.address.neighbourhood ||
+            data.address.town ||
+            data.address.city ||
+            data.address.county ||
+            data.address.state_district ||
+            data.address.state
+
+          const district = data.address.county ||
+            data.address.state_district || ''
+          const state = data.address.state || ''
+
+          const displayName = [placeName, district, state]
+            .filter(Boolean).join(', ')
+
+          if (placeName) {
+            const zoneData = getZone(placeName)
+
+            if (zoneData) {
+              setCity(placeName)
+              setCitySearch(placeName)
+              setZone(zoneData)
+              setLocationMessage(
+                `✅ ${displayName} detected — ${zoneData[0]} ${zoneData[1]}`
+              )
+            } else {
+              const assigned = assignZoneByCoords(latitude, longitude)
+              saveCustomLocation(placeName, displayName, latitude, longitude, assigned)
+              setCity(placeName)
+              setCitySearch(placeName)
+              setZone(assigned)
+              setLocationMessage(
+                `✅ ${displayName} detected — ${assigned[0]} ${assigned[1]} (auto assigned)`
+              )
+            }
+          }
+        } catch (err) {
+          setLocationError('Could not detect location. Please type your city.')
+        }
+        setLocationLoading(false)
+      },
+      () => {
+        setLocationError('Location access denied. Please type your city.')
+        setLocationLoading(false)
+      },
+      { timeout: 10000 }
+    )
+  }
+
+  function assignZoneByCoords(lat, lon) {
+    if (lat > 32 && lon > 76 && lon < 80)
+      return ['Z1', 'Cold Alpine', 20]
+    if (lat > 26 && lat < 32 && lon > 86 && lon < 90)
+      return ['Z2', 'Cold Hills', 25]
+    if (lat > 25 && lat < 30 && lon > 87 && lon < 92)
+      return ['Z3', 'Subtropical Hills', 28]
+    if (lat > 30 && lon > 76 && lon < 82)
+      return ['Z4', 'Subtropical Highland', 33]
+    if (lat > 22 && lat < 27 && lon > 88 && lon < 93)
+      return ['Z5', 'Subtropical Monsoon', 38]
+    if (lat > 23 && lat < 26 && lon > 91 && lon < 93)
+      return ['Z6', 'Subtropical Monsoon Highland', 32]
+    if (lat < 14 && lon > 92)
+      return ['Z9', 'Cool Tropical Highland', 33]
+    if (lat < 17 && lon > 73 && lon < 77)
+      return ['Z10', 'Tropical Mid-Elevation Monsoon', 38]
+    if (lat < 20 && lon > 72 && lon < 76)
+      return ['Z11', 'Tropical Monsoon Coastal', 38]
+    if (lat < 18 && lon > 77)
+      return ['Z14', 'Tropical WDS Coastal', 42]
+    if (lat < 20 && lon > 76 && lon < 80)
+      return ['Z15', 'Tropical Semi-Arid', 48]
+    if (lat > 25 && lon < 73)
+      return ['Z17', 'Subtropical Hot Arid', 50]
+    if (lat > 20 && lat < 28 && lon > 68 && lon < 76)
+      return ['Z8', 'Subtropical Semi-Arid', 44]
+    if (lat > 18 && lat < 24 && lon > 77 && lon < 85)
+      return ['Z13', 'Tropical WDS Hot Interior', 48]
+    if (lat < 20 && lon > 74 && lon < 78)
+      return ['Z18', 'Tropical Hot Semi-Arid', 46]
+    if (lat < 18 && lon > 76 && lon < 80)
+      return ['Z12', 'Tropical Wet-Dry Savanna', 40]
+    if (lat > 24 && lon > 76 && lon < 88)
+      return ['Z16', 'Subtropical Hot Semi-Arid Continental', 48]
+    return ['Z7', 'Humid Subtropical', 42]
+  }
+
+  function saveCustomLocation(placeName, displayName, lat, lon, zoneData) {
+    const customLocations = JSON.parse(
+      localStorage.getItem('customLocations') || '{}'
+    )
+    customLocations[placeName] = {
+      zone:        zoneData[0],
+      zoneName:    zoneData[1],
+      peakTemp:    zoneData[2],
+      displayName,
+      lat,
+      lon,
+      addedDate:   new Date().toISOString(),
+    }
+    localStorage.setItem('customLocations', JSON.stringify(customLocations))
   }
 
   // ─── Shared style tokens ─────────────────────────────────────────────────────
@@ -311,6 +444,57 @@ export default function Onboarding() {
             </div>
           )}
         </div>
+
+        {/* Use my location button */}
+        <button
+          onClick={detectLocation}
+          disabled={locationLoading}
+          style={{
+            width:          '100%',
+            padding:        '12px',
+            marginTop:      '10px',
+            background:     'white',
+            border:         '1.5px solid var(--green)',
+            borderRadius:   '12px',
+            color:          'var(--green)',
+            fontSize:       '14px',
+            fontWeight:     500,
+            cursor:         locationLoading ? 'not-allowed' : 'pointer',
+            display:        'flex',
+            alignItems:     'center',
+            justifyContent: 'center',
+            gap:            '8px',
+            fontFamily:     'var(--font-body)',
+          }}
+        >
+          {locationLoading ? '⏳ Detecting location…' : '📍 Use my location'}
+        </button>
+
+        {locationMessage && (
+          <div style={{
+            marginTop:    '8px',
+            padding:      '10px 12px',
+            background:   'var(--green-light)',
+            borderRadius: '8px',
+            fontSize:     '13px',
+            color:        'var(--green-dark)',
+          }}>
+            {locationMessage}
+          </div>
+        )}
+
+        {locationError && (
+          <div style={{
+            marginTop:    '8px',
+            padding:      '10px 12px',
+            background:   '#FCEBEB',
+            borderRadius: '8px',
+            fontSize:     '13px',
+            color:        '#E24B4A',
+          }}>
+            {locationError}
+          </div>
+        )}
 
         {/* Zone pill */}
         {zone && (

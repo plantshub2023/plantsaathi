@@ -440,10 +440,22 @@ export const ZONE_DETAILS = {
 };
 
 export function getZone(city) {
-  const key = Object.keys(ZONES).find(
+  const customLocations = JSON.parse(
+    localStorage.getItem('customLocations') || '{}'
+  )
+
+  const customZones = Object.fromEntries(
+    Object.entries(customLocations).map(([name, data]) => [
+      name, [data.zone, data.zoneName, data.peakTemp]
+    ])
+  )
+
+  const allZones = { ...ZONES, ...customZones }
+
+  const key = Object.keys(allZones).find(
     k => k.toLowerCase() === city.trim().toLowerCase()
-  );
-  return key ? ZONES[key] : null;
+  )
+  return key ? allZones[key] : null
 }
 
 export function getCitiesByZone(zoneCode) {
