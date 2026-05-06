@@ -298,6 +298,7 @@ Respond in this exact JSON format only, no other text:
           ref={fileRef}
           type="file"
           accept="image/*"
+          capture="environment"
           style={{ display: 'none' }}
           onChange={handleFile}
         />
