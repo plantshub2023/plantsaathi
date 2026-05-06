@@ -46,7 +46,8 @@ export default function PlantIdentifier() {
   const [result,  setResult]  = useState(null)
   const [added,   setAdded]   = useState(false)
 
-  const fileRef = useRef(null)
+  const cameraRef  = useRef(null)
+  const galleryRef = useRef(null)
 
   // ─── File pick ─────────────────────────────────────────────────────────────
   async function handleFile(e) {
@@ -235,7 +236,6 @@ Respond in this exact JSON format only, no other text:
 
         {/* ── Upload zone ──────────────────────────────────────────────────── */}
         <div
-          onClick={() => !loading && fileRef.current?.click()}
           style={{
             height:         '220px',
             borderRadius:   'var(--radius)',
@@ -245,7 +245,7 @@ Respond in this exact JSON format only, no other text:
             flexDirection:  'column',
             alignItems:     'center',
             justifyContent: 'center',
-            cursor:         loading ? 'default' : 'pointer',
+            cursor:         'default',
             overflow:       'hidden',
             marginBottom:   '16px',
             position:       'relative',
@@ -287,18 +287,48 @@ Respond in this exact JSON format only, no other text:
               <p style={{ margin: '0 0 4px', fontWeight: 500, fontSize: '15px', color: 'var(--green-dark)' }}>
                 Upload a plant photo
               </p>
-              <p style={{ margin: 0, fontSize: '13px', color: 'var(--muted)', textAlign: 'center', padding: '0 24px' }}>
+              <p style={{ margin: '0 0 16px', fontSize: '13px', color: 'var(--muted)', textAlign: 'center', padding: '0 24px' }}>
                 Clear photo of leaves, flowers or full plant
               </p>
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <button
+                  onClick={() => cameraRef.current?.click()}
+                  style={{
+                    background: 'var(--green)', color: '#fff', border: 'none',
+                    borderRadius: '99px', padding: '9px 16px', fontSize: '13px',
+                    fontFamily: 'var(--font-body)', fontWeight: 500, cursor: 'pointer',
+                  }}
+                >
+                  📷 Take Photo
+                </button>
+                <button
+                  onClick={() => galleryRef.current?.click()}
+                  style={{
+                    background: '#fff', color: 'var(--green-dark)',
+                    border: '1.5px solid var(--green)', borderRadius: '99px',
+                    padding: '9px 16px', fontSize: '13px',
+                    fontFamily: 'var(--font-body)', fontWeight: 500, cursor: 'pointer',
+                  }}
+                >
+                  🖼️ Gallery
+                </button>
+              </div>
             </>
           )}
         </div>
 
         <input
-          ref={fileRef}
+          ref={cameraRef}
           type="file"
           accept="image/*"
           capture="environment"
+          style={{ display: 'none' }}
+          onChange={handleFile}
+        />
+        <input
+          ref={galleryRef}
+          type="file"
+          accept="image/*"
           style={{ display: 'none' }}
           onChange={handleFile}
         />

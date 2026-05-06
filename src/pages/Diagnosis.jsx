@@ -49,7 +49,8 @@ export default function Diagnosis() {
   const [result,          setResult]          = useState(null)
   const [error,           setError]           = useState(null)
 
-  const fileRef        = useRef(null)
+  const cameraRef      = useRef(null)
+  const galleryRef     = useRef(null)
   const resultRef      = useRef(null)
   const selectedPlant  = plants.find(p => p.id === selectedPlantId)
   const canDiagnose    = !loading && (!!photo || symptoms.length > 0)
@@ -284,7 +285,6 @@ Respond in this exact JSON format only, no other text:
         <span style={labelStyle}>Plant photo</span>
 
         <div
-          onClick={() => fileRef.current?.click()}
           style={{
             border:         photo ? 'none' : '2px dashed var(--border)',
             borderRadius:   'var(--radius)',
@@ -294,7 +294,7 @@ Respond in this exact JSON format only, no other text:
             flexDirection:  'column',
             alignItems:     'center',
             justifyContent: 'center',
-            cursor:         'pointer',
+            cursor:         'default',
             overflow:       'hidden',
             transition:     'background 0.2s',
           }}
@@ -311,18 +311,48 @@ Respond in this exact JSON format only, no other text:
               <p style={{ margin: '0 0 4px', fontWeight: 500, fontSize: '15px', color: 'var(--green-dark)' }}>
                 Upload a photo of the sick plant
               </p>
-              <p style={{ margin: 0, fontSize: '13px', color: 'var(--muted)' }}>
+              <p style={{ margin: '0 0 16px', fontSize: '13px', color: 'var(--muted)' }}>
                 Take a clear photo in good light
               </p>
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <button
+                  onClick={() => cameraRef.current?.click()}
+                  style={{
+                    background: 'var(--green)', color: '#fff', border: 'none',
+                    borderRadius: '99px', padding: '9px 16px', fontSize: '13px',
+                    fontFamily: 'var(--font-body)', fontWeight: 500, cursor: 'pointer',
+                  }}
+                >
+                  📷 Take Photo
+                </button>
+                <button
+                  onClick={() => galleryRef.current?.click()}
+                  style={{
+                    background: '#fff', color: 'var(--green-dark)',
+                    border: '1.5px solid var(--green)', borderRadius: '99px',
+                    padding: '9px 16px', fontSize: '13px',
+                    fontFamily: 'var(--font-body)', fontWeight: 500, cursor: 'pointer',
+                  }}
+                >
+                  🖼️ Gallery
+                </button>
+              </div>
             </>
           )}
         </div>
 
         <input
-          ref={fileRef}
+          ref={cameraRef}
           type="file"
           accept="image/*"
           capture="environment"
+          style={{ display: 'none' }}
+          onChange={handleFile}
+        />
+        <input
+          ref={galleryRef}
+          type="file"
+          accept="image/*"
           style={{ display: 'none' }}
           onChange={handleFile}
         />
