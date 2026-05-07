@@ -1,3 +1,39 @@
+import {
+  getDefaultReminders,
+  markReminderDone,
+  toDateKey,
+} from '../utils/reminders.js'
+
+// ─── Migration ────────────────────────────────────────────────────────────────
+// Plants saved before the reminders refactor have a top-level lastWatered ISO
+// string and no reminders object. Convert lastWatered → reminders.watering
+// .lastCompleted (as YYYY-MM-DD), build defaults for the other five types,
+// drop the legacy field. Idempotent — already-migrated plants pass through.
+
+function migratePlant(plant) {
+  if (plant.reminders) return { plant, changed: false }
+
+  const reminders = getDefaultReminders(plant)
+  if (plant.lastWatered) {
+    reminders.watering.lastCompleted = toDateKey(plant.lastWatered)
+  }
+
+  const { lastWatered, ...rest } = plant
+  return { plant: { ...rest, reminders }, changed: true }
+}
+
+function migratePlants(plants) {
+  let changed = false
+  const migrated = plants.map(p => {
+    const result = migratePlant(p)
+    if (result.changed) changed = true
+    return result.plant
+  })
+  return { plants: migrated, changed }
+}
+
+// ─── Hook ─────────────────────────────────────────────────────────────────────
+
 export function useStorage() {
 
   function saveUser(userData) {
@@ -23,16 +59,22 @@ export function useStorage() {
 
   function getPlants() {
     const data = localStorage.getItem('plants');
-    return data ? JSON.parse(data) : [];
+    if (!data) return [];
+    const raw = JSON.parse(data);
+    const { plants, changed } = migratePlants(raw);
+    if (changed) savePlants(plants);
+    return plants;
   }
 
   function addPlant(plant) {
     const plants = getPlants();
+    const reminders = getDefaultReminders(plant);
+    reminders.watering.lastCompleted = toDateKey(new Date());
     const newPlant = {
       ...plant,
       id: 'plant_' + Date.now(),
       addedDate: new Date().toISOString(),
-      lastWatered: new Date().toISOString(),
+      reminders,
       diagnoses: [],
     };
     plants.push(newPlant);
@@ -54,8 +96,16 @@ export function useStorage() {
     savePlants(plants.filter(p => p.id !== plantId));
   }
 
+  function markReminder(plantId, type) {
+    const plants = getPlants();
+    const index = plants.findIndex(p => p.id === plantId);
+    if (index === -1) return;
+    plants[index] = markReminderDone(plants[index], type);
+    savePlants(plants);
+  }
+
   function waterPlant(plantId) {
-    updatePlant(plantId, { lastWatered: new Date().toISOString() });
+    markReminder(plantId, 'watering');
   }
 
   function saveDiagnosis(plantId, diagnosis) {
@@ -75,6 +125,6 @@ export function useStorage() {
     saveUser, getUser, hasUser, clearUser,
     savePlants, getPlants, addPlant,
     updatePlant, deletePlant, waterPlant,
-    saveDiagnosis,
+    markReminder, saveDiagnosis,
   };
 }

@@ -1,13 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStorage } from '../hooks/useStorage.js'
+import { daysSince, isReminderDue } from '../utils/reminders.js'
 import BottomNav from '../components/BottomNav.jsx'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
-
-function daysSince(dateStr) {
-  return Math.floor((Date.now() - new Date(dateStr).getTime()) / (1000 * 60 * 60 * 24))
-}
 
 function getGreeting() {
   const h = new Date().getHours()
@@ -15,9 +12,11 @@ function getGreeting() {
 }
 
 function getHealthStatus(plant) {
-  const d = daysSince(plant.lastWatered)
-  if (d < plant.waterDays)  return 'green'
-  if (d === plant.waterDays) return 'amber'
+  const watering = plant.reminders?.watering
+  if (!watering) return 'green'
+  const d = daysSince(watering.lastCompleted)
+  if (d < watering.frequencyDays)  return 'green'
+  if (d === watering.frequencyDays) return 'amber'
   return 'red'
 }
 
@@ -106,8 +105,10 @@ export default function Garden() {
   if (!user) return null
 
   const month        = new Date().getMonth()
-  const needsWater   = plants.filter(p => daysSince(p.lastWatered) >= p.waterDays).length
-  const daysJoined   = user.joinedDate ? daysSince(user.joinedDate) : 0
+  const needsWater   = plants.filter(p => isReminderDue(p.reminders?.watering)).length
+  const daysJoined   = user.joinedDate
+    ? Math.max(0, Math.floor((Date.now() - new Date(user.joinedDate).getTime()) / (1000 * 60 * 60 * 24)))
+    : 0
   const seasonalTip  = getSeasonalTip(month, user.zone || 'Z16')
   const greeting     = getGreeting()
 
@@ -379,13 +380,15 @@ export default function Garden() {
             gap:                 '12px',
           }}>
             {plants.map(plant => {
-              const status  = getHealthStatus(plant)
-              const daysAgo = daysSince(plant.lastWatered)
-              const bg      = CATEGORY_BG[plant.category] || CATEGORY_BG.tropical
+              const status        = getHealthStatus(plant)
+              const lastCompleted = plant.reminders?.watering?.lastCompleted
+              const daysAgo       = lastCompleted ? daysSince(lastCompleted) : null
+              const bg            = CATEGORY_BG[plant.category] || CATEGORY_BG.tropical
 
               const waterLabel =
-                daysAgo === 0 ? 'Watered today' :
-                daysAgo === 1 ? '1 day ago'     :
+                daysAgo === null ? 'Not watered yet' :
+                daysAgo === 0    ? 'Watered today'   :
+                daysAgo === 1    ? '1 day ago'       :
                 `${daysAgo} days ago`
 
               return (
