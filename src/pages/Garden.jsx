@@ -129,8 +129,13 @@ export default function Garden() {
 
   const month        = new Date().getMonth()
   const needsWater   = plants.filter(p => isReminderDue(p.reminders?.watering)).length
-  const daysJoined   = user.joinedDate
-    ? Math.max(0, Math.floor((Date.now() - new Date(user.joinedDate).getTime()) / (1000 * 60 * 60 * 24)))
+  const refDate = user.joinedDate
+    || plants.reduce((earliest, p) => {
+        if (!p.addedDate) return earliest
+        return !earliest || p.addedDate < earliest ? p.addedDate : earliest
+      }, null)
+  const daysJoined = refDate
+    ? Math.max(0, Math.floor((Date.now() - new Date(refDate).getTime()) / (1000 * 60 * 60 * 24)))
     : 0
   const seasonalTip  = getSeasonalTip(month, user.zone || 'Z16')
   const greeting     = getGreeting()
