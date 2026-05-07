@@ -135,7 +135,7 @@ export default function Garden() {
         return !earliest || p.addedDate < earliest ? p.addedDate : earliest
       }, null)
   const daysJoined = refDate
-    ? Math.max(0, Math.floor((Date.now() - new Date(refDate).getTime()) / (1000 * 60 * 60 * 24)))
+    ? Math.max(1, Math.floor((Date.now() - new Date(refDate).getTime()) / (1000 * 60 * 60 * 24)))
     : 0
   const seasonalTip  = getSeasonalTip(month, user.zone || 'Z16')
   const greeting     = getGreeting()
