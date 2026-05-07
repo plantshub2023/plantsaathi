@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStorage } from '../hooks/useStorage.js'
 import BottomNav from '../components/BottomNav.jsx'
@@ -63,6 +63,8 @@ function getSeasonalTip(month, zoneCode) {
   return 'Cool winter months — reduce watering, skip fertiliser, and plant marigolds or petunias for colour.'
 }
 
+const WEATHER_API_KEY = import.meta.env.VITE_WEATHER_API_KEY
+
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function Garden() {
@@ -72,9 +74,34 @@ export default function Garden() {
   const user   = getUser()
   const plants = getPlants()
 
+  const [weather, setWeather] = useState(null)
+
   useEffect(() => {
     if (!user) navigate('/onboarding', { replace: true })
   }, [])
+
+  useEffect(() => {
+    if (user?.lat && user?.lon) {
+      fetchWeather(user.lat, user.lon)
+    }
+  }, [])
+
+  async function fetchWeather(lat, lon) {
+    try {
+      const res = await fetch(
+        `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${WEATHER_API_KEY}&units=metric`
+      )
+      const data = await res.json()
+      setWeather({
+        temp:        Math.round(data.main.temp),
+        humidity:    data.main.humidity,
+        description: data.weather[0].description,
+        city:        data.name,
+      })
+    } catch {
+      // silently skip — widget just won't show
+    }
+  }
 
   if (!user) return null
 
@@ -134,6 +161,40 @@ export default function Garden() {
             fontWeight:   500,
           }}>
             🌍 {user.zone} · {user.zoneName}
+          </div>
+        )}
+
+        {weather && (
+          <div style={{
+            display:        'flex',
+            alignItems:     'center',
+            gap:            '14px',
+            marginTop:      '14px',
+            padding:        '12px 16px',
+            background:     'var(--green-light)',
+            borderRadius:   '12px',
+          }}>
+            <div style={{ fontSize: '26px', lineHeight: 1 }}>
+              {weather.temp >= 35 ? '🌡️' : weather.temp >= 25 ? '☀️' : weather.temp >= 15 ? '⛅' : '🌨️'}
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{
+                fontSize:   '13px',
+                fontWeight: 600,
+                color:      'var(--green-dark)',
+                marginBottom: '2px',
+              }}>
+                {weather.temp}°C &nbsp;·&nbsp; 💧 {weather.humidity}%
+              </div>
+              <div style={{
+                fontSize:    '12px',
+                color:       'var(--green-dark)',
+                opacity:     0.8,
+                textTransform: 'capitalize',
+              }}>
+                {weather.description}{weather.city ? ` · ${weather.city}` : ''}
+              </div>
+            </div>
           </div>
         )}
       </div>
