@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStorage } from '../hooks/useStorage'
+import { toDateKey } from '../utils/reminders.js'
 import { getZoneDetails } from '../data/zones'
 import BottomNav from '../components/BottomNav'
 
@@ -19,10 +20,10 @@ export default function Profile() {
 
   // ─── Stats helpers ─────────────────────────────────────────────────────────
   const now          = Date.now()
-  const wateredToday = plants.filter(p => {
-    if (!p.lastWatered) return false
-    return now - new Date(p.lastWatered).getTime() < 24 * 60 * 60 * 1000
-  }).length
+  const todayKey     = toDateKey(new Date())
+  const wateredToday = plants.filter(
+    p => p.reminders?.watering?.lastCompleted === todayKey
+  ).length
 
   const daysTogether = user.joinedDate
     ? Math.max(1, Math.floor((now - new Date(user.joinedDate).getTime()) / (1000 * 60 * 60 * 24)))

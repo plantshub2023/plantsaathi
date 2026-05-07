@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useStorage } from '../hooks/useStorage.js'
+import { daysSince } from '../utils/reminders.js'
 import { getZoneDetails } from '../data/zones.js'
 import BottomNav from '../components/BottomNav.jsx'
 
@@ -27,10 +28,6 @@ const TIP_CARDS = [
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function daysSince(dateStr) {
-  return Math.floor((Date.now() - new Date(dateStr).getTime()) / (1000 * 60 * 60 * 24))
-}
-
 function formatDate(iso) {
   return new Date(iso).toLocaleDateString('en-IN', {
     day: 'numeric', month: 'short', year: 'numeric',
@@ -38,14 +35,16 @@ function formatDate(iso) {
 }
 
 function waterLabel(days) {
-  if (days === 0) return 'Watered today'
-  if (days === 1) return '1 day ago'
+  if (days === null) return 'Not watered yet'
+  if (days === 0)    return 'Watered today'
+  if (days === 1)    return '1 day ago'
   return `${days} days ago`
 }
 
-function healthStatus(daysAgo, waterDays) {
-  if (daysAgo < waterDays)  return 'green'
-  if (daysAgo === waterDays) return 'amber'
+function healthStatus(daysAgo, frequencyDays) {
+  if (daysAgo === null)         return 'green'
+  if (daysAgo < frequencyDays)  return 'green'
+  if (daysAgo === frequencyDays) return 'amber'
   return 'red'
 }
 
@@ -78,7 +77,7 @@ export default function CareTips() {
 
   // ─── Local state ─────────────────────────────────────────────────────────
 
-  const [lastWatered,       setLastWatered]       = useState(plant.lastWatered)
+  const [, setTick]                                = useState(0)  // bump to re-read getPlants() after waterPlant
   const [justWatered,       setJustWatered]       = useState(false)
   const [tips,              setTips]              = useState(null)
   const [tipsLoading,       setTipsLoading]       = useState(true)
@@ -87,9 +86,11 @@ export default function CareTips() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [expandedDiagnosis, setExpandedDiagnosis] = useState(null)
 
-  const daysAgo  = daysSince(lastWatered)
-  const status   = healthStatus(daysAgo, plant.waterDays)
-  const diagnoses = (plant.diagnoses || [])
+  const watering      = plant.reminders?.watering
+  const frequencyDays = watering?.frequencyDays
+  const daysAgo       = watering?.lastCompleted ? daysSince(watering.lastCompleted) : null
+  const status        = healthStatus(daysAgo, frequencyDays)
+  const diagnoses     = (plant.diagnoses || [])
 
   // ─── Fetch AI care tips on mount ─────────────────────────────────────────
 
@@ -148,7 +149,7 @@ Give care tips in this exact JSON format only:
 
   function handleWater() {
     waterPlant(plant.id)
-    setLastWatered(new Date().toISOString())
+    setTick(t => t + 1)
     setJustWatered(true)
     setTimeout(() => setJustWatered(false), 3000)
   }
@@ -353,7 +354,7 @@ Give care tips in this exact JSON format only:
               {STATUS_LABEL[status]}
             </p>
             <p style={{ margin:0, fontSize:'12px', color:'var(--muted)', marginTop:'2px' }}>
-              Last watered: {waterLabel(daysAgo)} · every {plant.waterDays} {plant.waterDays === 1 ? 'day' : 'days'}
+              Last watered: {waterLabel(daysAgo)} · every {frequencyDays} {frequencyDays === 1 ? 'day' : 'days'}
             </p>
           </div>
         </div>

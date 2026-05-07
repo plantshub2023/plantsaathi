@@ -47,6 +47,8 @@ export default function AddPlant() {
   const [name,         setName]         = useState('')
   const [emoji,        setEmoji]        = useState('🌿')
   const [notes,        setNotes]        = useState('')
+  const [waterDays,    setWaterDays]    = useState(undefined)  // from catalog pick
+  const [category,     setCategory]     = useState(undefined)  // from catalog pick
   const [nameFocused,  setNameFocused]  = useState(false)
   const [notesFocused, setNotesFocused] = useState(false)
 
@@ -64,7 +66,12 @@ export default function AddPlant() {
 
   function handlePlantPick(e) {
     const plant = PLANTS.find(p => p.id === e.target.value)
-    if (plant) { setName(plant.name); setEmoji(plant.emoji) }
+    if (plant) {
+      setName(plant.name)
+      setEmoji(plant.emoji)
+      setWaterDays(plant.waterDays)
+      setCategory(plant.category)
+    }
   }
 
   function goBack() {
@@ -73,7 +80,14 @@ export default function AddPlant() {
   }
 
   function handleComplete() {
-    addPlant({ name: name.trim(), emoji, notes: notes.trim(), photo })
+    addPlant({
+      name:  name.trim(),
+      emoji,
+      notes: notes.trim(),
+      photo,
+      waterDays,
+      category,
+    })
     navigate('/garden')
   }
 
