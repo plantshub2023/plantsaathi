@@ -84,49 +84,60 @@ export default function Onboarding() {
         try {
           const { latitude, longitude } = position.coords
 
-          const res = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`,
-            { headers: { 'Accept-Language': 'en' } }
-          )
-          const data = await res.json()
+          // Always compute coord-based zone as final fallback
+          const assigned = assignZoneByCoords(latitude, longitude)
 
-          const placeName =
-            data.address.village ||
-            data.address.hamlet ||
-            data.address.suburb ||
-            data.address.neighbourhood ||
-            data.address.town ||
-            data.address.city ||
-            data.address.county ||
-            data.address.state_district ||
-            data.address.state
+          // Try Nominatim reverse geocode
+          let placeName    = null
+          let displayName  = ''
 
-          const district = data.address.county ||
-            data.address.state_district || ''
-          const state = data.address.state || ''
+          try {
+            const res  = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`,
+              { headers: { 'Accept-Language': 'en' } }
+            )
+            const data = await res.json()
+            const addr = data.address || {}
 
-          const displayName = [placeName, district, state]
-            .filter(Boolean).join(', ')
+            placeName =
+              addr.village        ||
+              addr.hamlet         ||
+              addr.suburb         ||
+              addr.neighbourhood  ||
+              addr.city_district  ||
+              addr.town           ||
+              addr.city           ||
+              addr.county         ||
+              addr.state_district ||
+              addr.state          ||
+              null
 
-          if (placeName) {
-            const zoneData = getZone(placeName)
-
-            if (zoneData) {
-              setCity(placeName)
-              setCitySearch(placeName)
-              setZone(zoneData)
-              setDetectedPlace(displayName)
-              setShowManualInput(false)
-            } else {
-              const assigned = assignZoneByCoords(latitude, longitude)
-              saveCustomLocation(placeName, displayName, latitude, longitude, assigned)
-              setCity(placeName)
-              setCitySearch(placeName)
-              setZone(assigned)
-              setDetectedPlace(displayName)
-              setShowManualInput(false)
-            }
+            const district = addr.county || addr.state_district || ''
+            const state    = addr.state  || ''
+            displayName    = [placeName, district, state].filter(Boolean).join(', ')
+          } catch {
+            // Nominatim failed — use coords only
           }
+
+          // If Nominatim gave nothing, label by coordinates
+          if (!placeName) {
+            placeName   = `Near ${latitude.toFixed(2)}°N ${longitude.toFixed(2)}°E`
+            displayName = placeName
+          }
+
+          const zoneData   = getZone(placeName)
+          const finalZone  = zoneData || assigned
+
+          if (!zoneData) {
+            saveCustomLocation(placeName, displayName, latitude, longitude, assigned)
+          }
+
+          setCity(placeName)
+          setCitySearch(placeName)
+          setZone(finalZone)
+          setDetectedPlace(displayName || placeName)
+          setShowManualInput(false)
+
         } catch (err) {
           setLocationError('Could not detect location. Please type your city.')
         }
