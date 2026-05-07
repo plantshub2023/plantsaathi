@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { Droplet, SprayCan, Sprout, RotateCw, Scissors, Flower2, Check } from 'lucide-react'
 import { useStorage } from '../hooks/useStorage.js'
-import { daysSince, isReminderDue } from '../utils/reminders.js'
+import { daysSince, isReminderDue, getDueReminders, REMINDER_TYPES } from '../utils/reminders.js'
 import BottomNav from '../components/BottomNav.jsx'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -36,6 +37,15 @@ const CATEGORY_BG = {
   trees:     '#ECFCCB',
 }
 
+const PILL_ICONS = {
+  watering:    Droplet,
+  misting:     SprayCan,
+  fertilizing: Sprout,
+  rotating:    RotateCw,
+  pruning:     Scissors,
+  repotting:   Flower2,
+}
+
 function getSeasonalTip(month, zoneCode) {
   const isHills   = ['Z1','Z2','Z3','Z4','Z6'].includes(zoneCode)
   const isArid    = ['Z8','Z17'].includes(zoneCode)
@@ -67,13 +77,15 @@ const WEATHER_API_KEY = import.meta.env.VITE_WEATHER_API_KEY
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function Garden() {
-  const navigate               = useNavigate()
-  const { getUser, getPlants } = useStorage()
+  const navigate                         = useNavigate()
+  const { getUser, getPlants, markReminder } = useStorage()
+
+  const [, setTick]      = useState(0)
+  const [checkmarks, setCheckmarks] = useState({})  // keyed "plantId:type"
+  const [weather, setWeather] = useState(null)
 
   const user   = getUser()
   const plants = getPlants()
-
-  const [weather, setWeather] = useState(null)
 
   useEffect(() => {
     if (!user) navigate('/onboarding', { replace: true })
@@ -100,6 +112,17 @@ export default function Garden() {
     } catch {
       // silently skip — widget just won't show
     }
+  }
+
+  function handleMarkPill(plantId, type, e) {
+    e.stopPropagation()
+    const key = `${plantId}:${type}`
+    setCheckmarks(prev => ({ ...prev, [key]: true }))
+    markReminder(plantId, type)
+    setTimeout(() => {
+      setCheckmarks(prev => { const next = { ...prev }; delete next[key]; return next })
+      setTick(t => t + 1)
+    }, 600)
   }
 
   if (!user) return null
@@ -391,6 +414,8 @@ export default function Garden() {
                 daysAgo === 1    ? '1 day ago'       :
                 `${daysAgo} days ago`
 
+              const dueTypes = getDueReminders(plant)
+
               return (
                 <div
                   key={plant.id}
@@ -454,6 +479,53 @@ export default function Garden() {
                         flexShrink:   0,
                       }} />
                     </div>
+
+                    {/* Due reminders */}
+                    {dueTypes.length > 0 && (
+                      <div style={{ marginTop: '8px' }}>
+                        <p style={{
+                          fontSize:   '12px',
+                          color:      '#1D9E75',
+                          fontWeight: 500,
+                          margin:     '0 0 6px',
+                        }}>
+                          {dueTypes.length === 1 ? '1 reminder due' : `${dueTypes.length} reminders due`}
+                        </p>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                          {dueTypes.map(type => {
+                            const Icon = PILL_ICONS[type]
+                            const meta = REMINDER_TYPES[type]
+                            const key  = `${plant.id}:${type}`
+                            const done = !!checkmarks[key]
+                            return (
+                              <button
+                                key={type}
+                                onClick={e => handleMarkPill(plant.id, type, e)}
+                                aria-label={`Mark ${meta.label} done`}
+                                style={{
+                                  display:        'flex',
+                                  alignItems:     'center',
+                                  justifyContent: 'center',
+                                  width:          '28px',
+                                  height:         '28px',
+                                  background:     'rgba(29,158,117,0.12)',
+                                  borderRadius:   '8px',
+                                  border:         'none',
+                                  cursor:         'pointer',
+                                  padding:        0,
+                                  flexShrink:     0,
+                                }}
+                              >
+                                {done
+                                  ? <Check size={14} color="#1D9E75" strokeWidth={2.5} />
+                                  : <Icon  size={14} color="#1D9E75" strokeWidth={1.8} />
+                                }
+                              </button>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               )
