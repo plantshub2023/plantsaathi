@@ -4,6 +4,7 @@ import { Droplet, SprayCan, Sprout, RotateCw, Scissors, Flower2, Check } from 'l
 import { useStorage } from '../hooks/useStorage.js'
 import { daysSince, isReminderDue, getDueReminders, REMINDER_TYPES } from '../utils/reminders.js'
 import BottomNav from '../components/BottomNav.jsx'
+import CareCalendar from '../components/CareCalendar.jsx'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -82,6 +83,7 @@ export default function Garden() {
 
   const [, setTick]      = useState(0)
   const [checkmarks, setCheckmarks] = useState({})  // keyed "plantId:type"
+  const [calendarOpen, setCalendarOpen] = useState(false)
   const [weather, setWeather] = useState(null)
 
   const user   = getUser()
@@ -249,17 +251,19 @@ export default function Garden() {
             alert: false,
           },
           {
-            emoji: '📅',
-            value: daysJoined,
-            label: daysJoined === 1 ? 'day together' : 'days together',
-            alert: false,
+            emoji:   '📅',
+            value:   daysJoined,
+            label:   daysJoined === 1 ? 'day together' : 'days together',
+            alert:   false,
+            onClick: () => setCalendarOpen(true),
           },
         ].map(stat => (
-          <div key={stat.label} style={{
+          <div key={stat.label} onClick={stat.onClick} style={{
             background:   stat.alert ? '#FFF5E6' : 'var(--cream)',
             borderRadius: 'var(--radius)',
             padding:      '14px 10px',
             textAlign:    'center',
+            cursor:       stat.onClick ? 'pointer' : 'default',
           }}>
             <div style={{ fontSize: '20px', marginBottom: '6px', lineHeight: 1 }}>
               {stat.emoji}
@@ -540,6 +544,13 @@ export default function Garden() {
       </div>
 
       <BottomNav />
+
+      {calendarOpen && (
+        <CareCalendar
+          plants={plants}
+          onClose={() => setCalendarOpen(false)}
+        />
+      )}
     </div>
   )
 }
