@@ -13,9 +13,11 @@ export default function Onboarding() {
   const [showDropdown, setShowDropdown]   = useState(false)
   const [selectedPlants, setSelectedPlants] = useState([])
   const [inputFocused, setInputFocused]   = useState(false)
-  const [locationLoading, setLocationLoading] = useState(false)
-  const [locationMessage, setLocationMessage] = useState('')
-  const [locationError,   setLocationError]   = useState('')
+  const [locationLoading,   setLocationLoading]   = useState(false)
+  const [locationError,     setLocationError]     = useState('')
+  const [detectedPlace,     setDetectedPlace]     = useState('')
+  const [locationConfirmed, setLocationConfirmed] = useState(false)
+  const [showManualInput,   setShowManualInput]   = useState(true)
 
   const navigate    = useNavigate()
   const { saveUser } = useStorage()
@@ -69,7 +71,7 @@ export default function Onboarding() {
   async function detectLocation() {
     setLocationLoading(true)
     setLocationError('')
-    setLocationMessage('')
+    setDetectedPlace('')
 
     if (!navigator.geolocation) {
       setLocationError('Location not supported on this device')
@@ -113,18 +115,16 @@ export default function Onboarding() {
               setCity(placeName)
               setCitySearch(placeName)
               setZone(zoneData)
-              setLocationMessage(
-                `✅ ${displayName} detected — ${zoneData[0]} ${zoneData[1]}`
-              )
+              setDetectedPlace(displayName)
+              setShowManualInput(false)
             } else {
               const assigned = assignZoneByCoords(latitude, longitude)
               saveCustomLocation(placeName, displayName, latitude, longitude, assigned)
               setCity(placeName)
               setCitySearch(placeName)
               setZone(assigned)
-              setLocationMessage(
-                `✅ ${displayName} detected — ${assigned[0]} ${assigned[1]} (auto assigned)`
-              )
+              setDetectedPlace(displayName)
+              setShowManualInput(false)
             }
           }
         } catch (err) {
@@ -192,6 +192,19 @@ export default function Onboarding() {
       addedDate:   new Date().toISOString(),
     }
     localStorage.setItem('customLocations', JSON.stringify(customLocations))
+  }
+
+  function confirmLocation() {
+    setLocationConfirmed(true)
+  }
+
+  function changeLocation() {
+    setDetectedPlace('')
+    setLocationConfirmed(false)
+    setShowManualInput(true)
+    setCity('')
+    setCitySearch('')
+    setZone(null)
   }
 
   // ─── Shared style tokens ─────────────────────────────────────────────────────
@@ -383,106 +396,99 @@ export default function Onboarding() {
         <h1 style={h1}>Where do you grow?</h1>
         <p style={muted}>We'll tailor care tips to your local climate</p>
 
-        <label style={labelStyle}>Your city</label>
-        <div style={{ position: 'relative' }}>
-          <input
-            style={{
-              ...inputStyle(inputFocused),
-              borderRadius: (showDropdown && suggestions.length > 0)
-                ? '12px 12px 0 0'
-                : '12px',
-            }}
-            type="text"
-            placeholder="Search city…"
-            value={citySearch}
-            onChange={e => {
-              setCitySearch(e.target.value)
-              setCity('')
-              setZone(null)
-              setShowDropdown(true)
-            }}
-            onFocus={() => { setInputFocused(true); setShowDropdown(true) }}
-            onBlur={() => {
-              setInputFocused(false)
-              setTimeout(() => setShowDropdown(false), 150)
-            }}
-            autoFocus
-          />
+        {/* Manual city search — shown when no GPS detection yet */}
+        {showManualInput && (
+          <>
+            <label style={labelStyle}>Your city</label>
+            <div style={{ position: 'relative' }}>
+              <input
+                style={{
+                  ...inputStyle(inputFocused),
+                  borderRadius: (showDropdown && suggestions.length > 0)
+                    ? '12px 12px 0 0'
+                    : '12px',
+                }}
+                type="text"
+                placeholder="Search city…"
+                value={citySearch}
+                onChange={e => {
+                  setCitySearch(e.target.value)
+                  setCity('')
+                  setZone(null)
+                  setShowDropdown(true)
+                }}
+                onFocus={() => { setInputFocused(true); setShowDropdown(true) }}
+                onBlur={() => {
+                  setInputFocused(false)
+                  setTimeout(() => setShowDropdown(false), 150)
+                }}
+                autoFocus
+              />
 
-          {showDropdown && suggestions.length > 0 && (
-            <div style={{
-              position: 'absolute',
-              top: '100%',
-              left: 0,
-              right: 0,
-              background: '#fff',
-              border: '1.5px solid var(--green)',
-              borderTop: 'none',
-              borderRadius: '0 0 12px 12px',
-              zIndex: 20,
-              maxHeight: '210px',
-              overflowY: 'auto',
-              boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
-            }}>
-              {suggestions.map((c, i) => (
-                <div
-                  key={c}
-                  onMouseDown={e => { e.preventDefault(); handleCitySelect(c) }}
-                  style={{
-                    padding: '13px 16px',
-                    fontSize: '15px',
-                    cursor: 'pointer',
-                    color: 'var(--text)',
-                    borderBottom: i < suggestions.length - 1
-                      ? '1px solid var(--border)'
-                      : 'none',
-                  }}
-                >
-                  {c}
+              {showDropdown && suggestions.length > 0 && (
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: 0,
+                  right: 0,
+                  background: '#fff',
+                  border: '1.5px solid var(--green)',
+                  borderTop: 'none',
+                  borderRadius: '0 0 12px 12px',
+                  zIndex: 20,
+                  maxHeight: '210px',
+                  overflowY: 'auto',
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
+                }}>
+                  {suggestions.map((c, i) => (
+                    <div
+                      key={c}
+                      onMouseDown={e => { e.preventDefault(); handleCitySelect(c) }}
+                      style={{
+                        padding: '13px 16px',
+                        fontSize: '15px',
+                        cursor: 'pointer',
+                        color: 'var(--text)',
+                        borderBottom: i < suggestions.length - 1
+                          ? '1px solid var(--border)'
+                          : 'none',
+                      }}
+                    >
+                      {c}
+                    </div>
+                  ))}
                 </div>
-              ))}
+              )}
             </div>
-          )}
-        </div>
 
-        {/* Use my location button */}
-        <button
-          onClick={detectLocation}
-          disabled={locationLoading}
-          style={{
-            width:          '100%',
-            padding:        '12px',
-            marginTop:      '10px',
-            background:     'white',
-            border:         '1.5px solid var(--green)',
-            borderRadius:   '12px',
-            color:          'var(--green)',
-            fontSize:       '14px',
-            fontWeight:     500,
-            cursor:         locationLoading ? 'not-allowed' : 'pointer',
-            display:        'flex',
-            alignItems:     'center',
-            justifyContent: 'center',
-            gap:            '8px',
-            fontFamily:     'var(--font-body)',
-          }}
-        >
-          {locationLoading ? '⏳ Detecting location…' : '📍 Use my location'}
-        </button>
-
-        {locationMessage && (
-          <div style={{
-            marginTop:    '8px',
-            padding:      '10px 12px',
-            background:   'var(--green-light)',
-            borderRadius: '8px',
-            fontSize:     '13px',
-            color:        'var(--green-dark)',
-          }}>
-            {locationMessage}
-          </div>
+            {/* Use my location button */}
+            <button
+              onClick={detectLocation}
+              disabled={locationLoading}
+              style={{
+                width:          '100%',
+                padding:        '12px',
+                marginTop:      '10px',
+                background:     'white',
+                border:         '1.5px solid var(--green)',
+                borderRadius:   '12px',
+                color:          'var(--green)',
+                fontSize:       '14px',
+                fontWeight:     500,
+                cursor:         locationLoading ? 'not-allowed' : 'pointer',
+                display:        'flex',
+                alignItems:     'center',
+                justifyContent: 'center',
+                gap:            '8px',
+                fontFamily:     'var(--font-body)',
+              }}
+            >
+              {locationLoading ? '⏳ Detecting location…' : '📍 Use my location'}
+            </button>
+          </>
         )}
 
+        {/* GPS error */}
         {locationError && (
           <div style={{
             marginTop:    '8px',
@@ -496,8 +502,65 @@ export default function Onboarding() {
           </div>
         )}
 
-        {/* Zone pill */}
-        {zone && (
+        {/* Location confirmation card */}
+        {detectedPlace && !locationConfirmed && (
+          <div style={{
+            background:   '#fff',
+            border:       '1px solid var(--border)',
+            borderRadius: '12px',
+            padding:      '16px',
+            marginTop:    '10px',
+          }}>
+            <div style={{ fontSize: '13px', color: 'var(--muted)', marginBottom: '8px' }}>
+              📍 Detected location:
+            </div>
+            <div style={{ fontSize: '15px', fontWeight: 500, marginBottom: '12px' }}>
+              {detectedPlace}
+            </div>
+            <div style={{ fontSize: '12px', color: 'var(--green)', marginBottom: '12px' }}>
+              {zone?.[0]} — {zone?.[1]}
+            </div>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                onClick={confirmLocation}
+                style={{
+                  flex:         1,
+                  padding:      '10px',
+                  background:   'var(--green)',
+                  color:        '#fff',
+                  border:       'none',
+                  borderRadius: '10px',
+                  fontSize:     '13px',
+                  fontWeight:   500,
+                  cursor:       'pointer',
+                  fontFamily:   'var(--font-body)',
+                }}
+              >
+                ✅ Sahi hai
+              </button>
+              <button
+                onClick={changeLocation}
+                style={{
+                  flex:         1,
+                  padding:      '10px',
+                  background:   '#fff',
+                  color:        'var(--green)',
+                  border:       '1.5px solid var(--green)',
+                  borderRadius: '10px',
+                  fontSize:     '13px',
+                  fontWeight:   500,
+                  cursor:       'pointer',
+                  fontFamily:   'var(--font-body)',
+                }}
+              >
+                ✏️ Change karo
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Zone pill — shown after manual select or after confirmation */}
+        {zone && (locationConfirmed || !detectedPlace) && (
           <div style={{
             display: 'inline-flex',
             alignItems: 'center',
@@ -523,9 +586,9 @@ export default function Onboarding() {
           <button
             style={{
               ...btnPrimary,
-              ...(!city ? btnDisabled : {}),
+              ...(!city || (detectedPlace && !locationConfirmed) ? btnDisabled : {}),
             }}
-            disabled={!city}
+            disabled={!city || (detectedPlace && !locationConfirmed)}
             onClick={() => setStep(3)}
           >
             Next →
