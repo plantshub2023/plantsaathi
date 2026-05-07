@@ -64,7 +64,7 @@ export default function BottomNav() {
       background: '#fff',
       borderTop:  '1px solid var(--border)',
       display:    'flex',
-      zIndex:     100,
+      zIndex:     202,
       paddingBottom: 'env(safe-area-inset-bottom, 0px)',
     }}>
       {TABS.map(tab => {
