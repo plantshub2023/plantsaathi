@@ -4,11 +4,13 @@ import { useStorage } from '../hooks/useStorage'
 import { toDateKey } from '../utils/reminders.js'
 import { getZoneDetails } from '../data/zones'
 import BottomNav from '../components/BottomNav'
+import CareCalendar from '../components/CareCalendar.jsx'
 
 export default function Profile() {
   const navigate   = useNavigate()
   const { getUser, getPlants, clearUser } = useStorage()
-  const [showReset, setShowReset] = useState(false)
+  const [showReset,    setShowReset]    = useState(false)
+  const [calendarOpen, setCalendarOpen] = useState(false)
 
   const user   = getUser()
   const plants = getPlants()
@@ -158,14 +160,15 @@ export default function Profile() {
           gap:                 '10px',
         }}>
           {[
-            { icon: '🌱', value: plants.length,  label: 'Total plants'   },
-            { icon: '💧', value: wateredToday,   label: 'Watered today'  },
-            { icon: '📅', value: daysTogether,   label: 'Days together'  },
-          ].map(({ icon, value, label }) => (
-            <div key={label} style={{
+            { icon: '🌱', value: plants.length,  label: 'Total plants',  onClick: undefined                    },
+            { icon: '💧', value: wateredToday,   label: 'Watered today', onClick: undefined                    },
+            { icon: '📅', value: daysTogether,   label: 'Days together', onClick: () => setCalendarOpen(true)  },
+          ].map(({ icon, value, label, onClick }) => (
+            <div key={label} onClick={onClick} style={{
               ...card,
               padding:   '16px 10px',
               textAlign: 'center',
+              cursor:    onClick ? 'pointer' : 'default',
             }}>
               <div style={{ fontSize: '22px', marginBottom: '4px' }}>{icon}</div>
               <div style={{
@@ -456,6 +459,13 @@ export default function Profile() {
       {/* ── BottomNav ──────────────────────────────────────────────────────── */}
       <BottomNav />
 
+      {calendarOpen && (
+        <CareCalendar
+          plants={plants}
+          onClose={() => setCalendarOpen(false)}
+        />
+      )}
+
       {/* ── Reset confirm modal ────────────────────────────────────────────── */}
       {showReset && (
         <div
@@ -466,7 +476,7 @@ export default function Profile() {
             background: 'rgba(0,0,0,0.45)',
             display:    'flex',
             alignItems: 'flex-end',
-            zIndex:     100,
+            zIndex:     300,
           }}
         >
           <div
