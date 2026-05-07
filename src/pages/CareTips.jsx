@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { SprayCan, Sprout, RotateCw, Scissors, Flower2 } from 'lucide-react'
 import { useStorage } from '../hooks/useStorage.js'
-import { daysSince } from '../utils/reminders.js'
+import { daysSince, daysUntilDue, REMINDER_TYPES } from '../utils/reminders.js'
 import { getZoneDetails } from '../data/zones.js'
 import BottomNav from '../components/BottomNav.jsx'
 
@@ -56,12 +57,44 @@ const STATUS_LABEL = {
   red:   'Overdue — needs water',
 }
 
+// ─── Other reminders config ───────────────────────────────────────────────────
+
+const OTHER_REMINDER_KEYS = ['misting', 'fertilizing', 'rotating', 'pruning', 'repotting']
+
+const REMINDER_ICONS = {
+  misting:     SprayCan,
+  fertilizing: Sprout,
+  rotating:    RotateCw,
+  pruning:     Scissors,
+  repotting:   Flower2,
+}
+
+function reminderStatus(reminder) {
+  if (!reminder?.enabled) return { text: 'Off', color: '#9CA3AF', bold: false }
+  const d = daysUntilDue(reminder)
+  if (d === 0) return { text: 'Due today', color: '#1D9E75', bold: true }
+  if (d < 0)   return {
+    text:  `${Math.abs(d)} ${Math.abs(d) === 1 ? 'day' : 'days'} overdue`,
+    color: '#DC2626',
+    bold:  true,
+  }
+  return { text: `in ${d} ${d === 1 ? 'day' : 'days'}`, color: 'var(--muted)', bold: false }
+}
+
+function lastDoneText(reminder) {
+  if (!reminder?.lastCompleted) return 'Never'
+  const d = daysSince(reminder.lastCompleted)
+  if (d === 0) return 'today'
+  if (d === 1) return '1 day ago'
+  return `${d} days ago`
+}
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function CareTips() {
   const navigate           = useNavigate()
   const { plantId }        = useParams()
-  const { getPlants, getUser, waterPlant, deletePlant } = useStorage()
+  const { getPlants, getUser, waterPlant, deletePlant, updatePlant, markReminder } = useStorage()
 
   const plants     = getPlants()
   const user       = getUser()
@@ -85,6 +118,8 @@ export default function CareTips() {
   const [showMenu,          setShowMenu]          = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [expandedDiagnosis, setExpandedDiagnosis] = useState(null)
+  const [expandedReminder,  setExpandedReminder]  = useState(null)
+  const [flashedReminder,   setFlashedReminder]   = useState(null)
 
   const watering      = plant.reminders?.watering
   const frequencyDays = watering?.frequencyDays
@@ -157,6 +192,41 @@ Give care tips in this exact JSON format only:
   function handleDelete() {
     deletePlant(plant.id)
     navigate('/garden', { replace: true })
+  }
+
+  function handleToggleReminder(type) {
+    const current = plant.reminders?.[type]
+    if (!current) return
+    updatePlant(plant.id, {
+      reminders: {
+        ...plant.reminders,
+        [type]: { ...current, enabled: !current.enabled },
+      },
+    })
+    setTick(t => t + 1)
+    if (current.enabled && expandedReminder === type) setExpandedReminder(null)
+  }
+
+  function handleFrequencyChange(type, delta) {
+    const current = plant.reminders?.[type]
+    if (!current) return
+    const next = Math.max(1, current.frequencyDays + delta)
+    if (next === current.frequencyDays) return
+    updatePlant(plant.id, {
+      reminders: {
+        ...plant.reminders,
+        [type]: { ...current, frequencyDays: next },
+      },
+    })
+    setTick(t => t + 1)
+  }
+
+  function handleMarkReminderDone(type) {
+    markReminder(plant.id, type)
+    setTick(t => t + 1)
+    setExpandedReminder(null)
+    setFlashedReminder(type)
+    setTimeout(() => setFlashedReminder(null), 600)
   }
 
   // ─── Shared style tokens ──────────────────────────────────────────────────
@@ -379,6 +449,210 @@ Give care tips in this exact JSON format only:
         >
           {justWatered ? 'Watered today ✓' : '💧 Mark as watered'}
         </button>
+      </div>
+
+      {/* ── Other reminders ────────────────────────────────────────────────── */}
+      <div style={card({ padding: '20px' })}>
+        <span style={sectionLabel}>Other reminders</span>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          {OTHER_REMINDER_KEYS.map(type => {
+            const r = plant.reminders?.[type]
+            if (!r) return null
+            const Icon       = REMINDER_ICONS[type]
+            const meta       = REMINDER_TYPES[type]
+            const status     = reminderStatus(r)
+            const enabled    = r.enabled
+            const isExpanded = enabled && expandedReminder === type
+            const isFlashing = flashedReminder === type
+            const canDecrease = r.frequencyDays > 1
+
+            return (
+              <div
+                key={type}
+                style={{
+                  background:   isFlashing ? 'var(--green-light)' : '#fff',
+                  border:       '1px solid var(--border)',
+                  borderRadius: '12px',
+                  overflow:     'hidden',
+                  transition:   'background 0.3s ease',
+                }}
+              >
+                {/* Header row */}
+                <div
+                  onClick={() => enabled && setExpandedReminder(isExpanded ? null : type)}
+                  style={{
+                    display:    'flex',
+                    alignItems: 'center',
+                    gap:        '12px',
+                    padding:    '14px 16px',
+                    cursor:     enabled ? 'pointer' : 'default',
+                  }}
+                >
+                  <Icon
+                    size={20}
+                    color={enabled ? '#1D9E75' : '#9CA3AF'}
+                    strokeWidth={1.8}
+                    style={{ flexShrink: 0 }}
+                  />
+                  <span style={{
+                    flex:       1,
+                    fontSize:   '15px',
+                    fontWeight: 500,
+                    color:      enabled ? 'var(--text)' : '#9CA3AF',
+                  }}>
+                    {meta.label}
+                  </span>
+                  <span style={{
+                    fontSize:   '13px',
+                    fontWeight: status.bold ? 600 : 400,
+                    color:      status.color,
+                    flexShrink: 0,
+                  }}>
+                    {status.text}
+                  </span>
+
+                  {/* Toggle */}
+                  <button
+                    onClick={e => { e.stopPropagation(); handleToggleReminder(type) }}
+                    aria-label={`${enabled ? 'Disable' : 'Enable'} ${meta.label}`}
+                    style={{
+                      width:        '40px',
+                      height:       '24px',
+                      background:   enabled ? 'var(--green)' : '#D1D5DB',
+                      borderRadius: '12px',
+                      border:       'none',
+                      position:     'relative',
+                      cursor:       'pointer',
+                      transition:   'background 0.2s ease',
+                      padding:      0,
+                      flexShrink:   0,
+                    }}
+                  >
+                    <span style={{
+                      position:     'absolute',
+                      top:          '2px',
+                      left:         enabled ? '18px' : '2px',
+                      width:        '20px',
+                      height:       '20px',
+                      borderRadius: '50%',
+                      background:   '#fff',
+                      transition:   'left 0.2s ease',
+                      boxShadow:    '0 1px 3px rgba(0,0,0,0.15)',
+                    }} />
+                  </button>
+                </div>
+
+                {/* Editor */}
+                {isExpanded && (
+                  <div style={{
+                    padding:       '14px 16px 16px',
+                    borderTop:     '1px solid var(--border)',
+                    display:       'flex',
+                    flexDirection: 'column',
+                    gap:           '14px',
+                  }}>
+                    {/* Frequency stepper */}
+                    <div style={{
+                      display:        'flex',
+                      alignItems:     'center',
+                      justifyContent: 'space-between',
+                      gap:            '12px',
+                    }}>
+                      <span style={{ fontSize: '13px', color: 'var(--muted)' }}>
+                        Frequency
+                      </span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <span style={{ fontSize: '13px', color: 'var(--text)' }}>Every</span>
+                        <button
+                          onClick={() => handleFrequencyChange(type, -1)}
+                          disabled={!canDecrease}
+                          style={{
+                            width:          '32px',
+                            height:         '32px',
+                            background:     canDecrease ? 'var(--green-light)' : '#F3F4F6',
+                            color:          canDecrease ? 'var(--green-dark)' : '#D1D5DB',
+                            border:         'none',
+                            borderRadius:   '8px',
+                            fontSize:       '18px',
+                            fontWeight:     500,
+                            cursor:         canDecrease ? 'pointer' : 'not-allowed',
+                            display:        'flex',
+                            alignItems:     'center',
+                            justifyContent: 'center',
+                            flexShrink:     0,
+                            lineHeight:     1,
+                          }}
+                          aria-label="Decrease frequency"
+                        >
+                          −
+                        </button>
+                        <span style={{
+                          fontSize:   '15px',
+                          fontWeight: 600,
+                          color:      'var(--text)',
+                          minWidth:   '24px',
+                          textAlign:  'center',
+                        }}>
+                          {r.frequencyDays}
+                        </span>
+                        <button
+                          onClick={() => handleFrequencyChange(type, +1)}
+                          style={{
+                            width:          '32px',
+                            height:         '32px',
+                            background:     'var(--green-light)',
+                            color:          'var(--green-dark)',
+                            border:         'none',
+                            borderRadius:   '8px',
+                            fontSize:       '18px',
+                            fontWeight:     500,
+                            cursor:         'pointer',
+                            display:        'flex',
+                            alignItems:     'center',
+                            justifyContent: 'center',
+                            flexShrink:     0,
+                            lineHeight:     1,
+                          }}
+                          aria-label="Increase frequency"
+                        >
+                          +
+                        </button>
+                        <span style={{ fontSize: '13px', color: 'var(--text)' }}>
+                          {r.frequencyDays === 1 ? 'day' : 'days'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Last done */}
+                    <p style={{ margin: 0, fontSize: '13px', color: 'var(--muted)' }}>
+                      Last done: {lastDoneText(r)}
+                    </p>
+
+                    {/* Mark done button */}
+                    <button
+                      onClick={() => handleMarkReminderDone(type)}
+                      style={{
+                        width:        '100%',
+                        padding:      '12px',
+                        fontSize:     '14px',
+                        fontWeight:   500,
+                        fontFamily:   'var(--font-body)',
+                        color:        '#fff',
+                        background:   'var(--green)',
+                        border:       'none',
+                        borderRadius: '10px',
+                        cursor:       'pointer',
+                      }}
+                    >
+                      Mark done today
+                    </button>
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
       </div>
 
       {/* ── AI care tips ───────────────────────────────────────────────────── */}
