@@ -40,3 +40,8 @@ body {
   position: relative;
   overflow-x: hidden;
 }
+
+@keyframes slideUp {
+  from { transform: translateX(-50%) translateY(100%); }
+  to   { transform: translateX(-50%) translateY(0); }
+}
