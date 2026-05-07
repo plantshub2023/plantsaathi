@@ -18,6 +18,8 @@ export default function Onboarding() {
   const [detectedPlace,     setDetectedPlace]     = useState('')
   const [locationConfirmed, setLocationConfirmed] = useState(false)
   const [showManualInput,   setShowManualInput]   = useState(true)
+  const [detectedLat,       setDetectedLat]       = useState(null)
+  const [detectedLon,       setDetectedLon]       = useState(null)
 
   const navigate    = useNavigate()
   const { saveUser } = useStorage()
@@ -61,6 +63,8 @@ export default function Onboarding() {
       zone:     zone ? zone[0] : null,
       zoneName: zone ? zone[1] : null,
       plants:   skipPlants ? [] : selectedPlants,
+      lat:      detectedLat,
+      lon:      detectedLon,
       joinedDate: new Date().toISOString(),
     })
     navigate('/garden')
@@ -83,6 +87,8 @@ export default function Onboarding() {
       async (position) => {
         try {
           const { latitude, longitude } = position.coords
+          setDetectedLat(latitude)
+          setDetectedLon(longitude)
 
           // Always compute coord-based zone as final fallback
           const assigned = assignZoneByCoords(latitude, longitude)
