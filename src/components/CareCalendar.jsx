@@ -68,18 +68,17 @@ export default function CareCalendar({ plants, onClose }) {
 
   return createPortal(
     <>
-      {/* Backdrop — rendered on document.body so no scroll-container or
-          overflow-x:hidden ancestor can clip it on mobile */}
+      {/* Backdrop */}
       <div
         onClick={onClose}
         style={{
           position:   'fixed',
           top:        0,
-          right:      0,
-          bottom:     0,
           left:       0,
+          width:      '100vw',
+          height:     '100vh',
           background: 'rgba(0,0,0,0.45)',
-          zIndex:     200,
+          zIndex:     9999,
         }}
       />
 
@@ -91,9 +90,11 @@ export default function CareCalendar({ plants, onClose }) {
         transform:     'translateX(-50%)',
         width:         '100%',
         maxWidth:      '390px',
+        maxHeight:     '85vh',
+        overflowY:     'auto',
         background:    'var(--cream)',
         borderRadius:  '20px 20px 0 0',
-        zIndex:        201,
+        zIndex:        10000,
         animation:     'slideUp 0.25s ease',
         paddingBottom: 'max(24px, env(safe-area-inset-bottom))',
       }}>
