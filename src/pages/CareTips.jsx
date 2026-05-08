@@ -127,6 +127,22 @@ function reminderMeter(reminder, labels) {
   return { pct: 100, color: '#DC2626', label: labels.overdue }
 }
 
+// Returns { pct, color, label } for soil health based on repotting reminder.
+// Fresh = repotted ≤6 months ago and >90 days until due; Aging = >6 months or
+// due within 3 months; Needs Repotting = overdue; Unknown = never repotted.
+function soilMeter(reminder) {
+  if (!reminder?.enabled || !reminder.lastCompleted) {
+    return { pct: 50, color: '#F59E0B', label: 'Unknown' }
+  }
+  const elapsed  = daysSince(reminder.lastCompleted)
+  const freq     = reminder.frequencyDays
+  const pct      = Math.min((elapsed / freq) * 100, 100)
+  const daysLeft = freq - elapsed
+  if (daysLeft <= 0)                    return { pct: 100, color: '#DC2626', label: 'Needs Repotting' }
+  if (elapsed <= 180 && daysLeft > 90) return { pct,      color: '#1D9E75', label: 'Fresh'           }
+  return { pct, color: '#F59E0B', label: 'Aging' }
+}
+
 function MeterBar({ icon, label, pct, color, status }) {
   return (
     <div>
@@ -204,6 +220,7 @@ export default function CareTips() {
   const fertMeter  = reminderMeter(plant.reminders?.fertilizing, { good: 'Good', soon: 'Fertilize Soon', overdue: 'Needs Fertilizing'  })
   const lightInfo  = lightForCategory(plant.category)
   const humidInfo  = humidityForZone(user?.zone)
+  const soilHealth = soilMeter(plant.reminders?.repotting)
 
   // ─── Fetch AI care tips on mount ─────────────────────────────────────────
 
@@ -740,7 +757,8 @@ Give care tips in this exact JSON format only:
           <MeterBar icon="💧" label="Water Health"      pct={waterMeter.pct} color={waterMeter.color} status={waterMeter.label} />
           <MeterBar icon="🌱" label="Fertilizer Health" pct={fertMeter.pct}  color={fertMeter.color}  status={fertMeter.label}  />
           <MeterBar icon="☀️" label="Light"             pct={lightInfo.pct}  color="#1D9E75"          status={lightInfo.label}  />
-          <MeterBar icon="💧" label="Humidity"          pct={humidInfo.pct}  color="#1D9E75"          status={humidInfo.label}  />
+          <MeterBar icon="💧" label="Humidity"          pct={humidInfo.pct}      color="#1D9E75"          status={humidInfo.label}     />
+          <MeterBar icon="🪱" label="Soil Health"        pct={soilHealth.pct}     color={soilHealth.color}  status={soilHealth.label}    />
         </div>
       </div>
 
