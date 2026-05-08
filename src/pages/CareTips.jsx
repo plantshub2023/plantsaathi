@@ -89,6 +89,78 @@ function lastDoneText(reminder) {
   return `${d} days ago`
 }
 
+// ─── Plant Health helpers ─────────────────────────────────────────────────────
+
+const LIGHT_BY_CATEGORY = {
+  tropical:  { label: 'High',      pct: 75  },
+  succulent: { label: 'Very High', pct: 100 },
+  fern:      { label: 'Low',       pct: 25  },
+  flowering: { label: 'High',      pct: 75  },
+  herbs:     { label: 'Moderate',  pct: 50  },
+  indoor:    { label: 'Moderate',  pct: 50  },
+  fruit:     { label: 'Very High', pct: 100 },
+  trees:     { label: 'High',      pct: 75  },
+}
+
+function lightForCategory(category) {
+  return LIGHT_BY_CATEGORY[category] ?? { label: 'Moderate', pct: 50 }
+}
+
+function humidityForZone(zone) {
+  if (!zone) return { label: 'Moderate', pct: 50 }
+  const num = parseInt(zone.replace('Z', ''), 10)
+  if (num <= 3)  return { label: 'High',      pct: 75  }
+  if (num <= 8)  return { label: 'Very High', pct: 100 }
+  if (num <= 13) return { label: 'Low',       pct: 25  }
+  return { label: 'High', pct: 75 }  // Z14–Z16
+}
+
+// Returns { pct, color, label } for a care reminder meter.
+// Ratio of cycle elapsed: <50% = green, 50–100% = yellow, ≥100% = red.
+function reminderMeter(reminder, labels) {
+  if (!reminder?.enabled)       return { pct: 0,   color: '#D1D5DB', label: 'Off'          }
+  if (!reminder.lastCompleted)  return { pct: 100, color: '#DC2626', label: labels.overdue }
+  const ratio = daysSince(reminder.lastCompleted) / reminder.frequencyDays
+  const pct   = Math.min(ratio, 1) * 100
+  if (ratio < 0.5) return { pct, color: '#1D9E75', label: labels.good }
+  if (ratio < 1.0) return { pct, color: '#F59E0B', label: labels.soon }
+  return { pct: 100, color: '#DC2626', label: labels.overdue }
+}
+
+function MeterBar({ icon, label, pct, color, status }) {
+  return (
+    <div>
+      <div style={{
+        display:        'flex',
+        justifyContent: 'space-between',
+        alignItems:     'center',
+        marginBottom:   '7px',
+      }}>
+        <span style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text)' }}>
+          {icon}&nbsp;&nbsp;{label}
+        </span>
+        <span style={{ fontSize: '13px', fontWeight: 600, color }}>
+          {status}
+        </span>
+      </div>
+      <div style={{
+        height:       '8px',
+        background:   '#E5E7EB',
+        borderRadius: '99px',
+        overflow:     'hidden',
+      }}>
+        <div style={{
+          height:       '100%',
+          width:        `${Math.max(pct, 3)}%`,
+          background:   color,
+          borderRadius: '99px',
+          transition:   'width 0.4s ease',
+        }} />
+      </div>
+    </div>
+  )
+}
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function CareTips() {
@@ -126,6 +198,12 @@ export default function CareTips() {
   const daysAgo       = watering?.lastCompleted ? daysSince(watering.lastCompleted) : null
   const status        = healthStatus(daysAgo, frequencyDays)
   const diagnoses     = (plant.diagnoses || [])
+
+  // ─── Plant health meters ────────────────────────────────────────────────────
+  const waterMeter = reminderMeter(plant.reminders?.watering,    { good: 'Good', soon: 'Water Soon',     overdue: 'Needs Water'       })
+  const fertMeter  = reminderMeter(plant.reminders?.fertilizing, { good: 'Good', soon: 'Fertilize Soon', overdue: 'Needs Fertilizing'  })
+  const lightInfo  = lightForCategory(plant.category)
+  const humidInfo  = humidityForZone(user?.zone)
 
   // ─── Fetch AI care tips on mount ─────────────────────────────────────────
 
@@ -652,6 +730,17 @@ Give care tips in this exact JSON format only:
               </div>
             )
           })}
+        </div>
+      </div>
+
+      {/* ── Plant Health ───────────────────────────────────────────────────── */}
+      <div style={card({ padding: '20px' })}>
+        <span style={sectionLabel}>Plant Health</span>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+          <MeterBar icon="💧" label="Water Health"      pct={waterMeter.pct} color={waterMeter.color} status={waterMeter.label} />
+          <MeterBar icon="🌱" label="Fertilizer Health" pct={fertMeter.pct}  color={fertMeter.color}  status={fertMeter.label}  />
+          <MeterBar icon="☀️" label="Light"             pct={lightInfo.pct}  color="#1D9E75"          status={lightInfo.label}  />
+          <MeterBar icon="💧" label="Humidity"          pct={humidInfo.pct}  color="#1D9E75"          status={humidInfo.label}  />
         </div>
       </div>
 
