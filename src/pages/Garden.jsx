@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Droplet, SprayCan, Sprout, RotateCw, Scissors, Flower2, Check } from 'lucide-react'
 import { useStorage } from '../hooks/useStorage.js'
@@ -76,24 +76,17 @@ function getSeasonalTip(month, zoneCode) {
 
 const WEATHER_API_KEY = import.meta.env.VITE_WEATHER_API_KEY
 
-const ROOM_FILTERS = ['All', 'Indoor', 'Outdoor', 'Balcony', 'Office', 'Bedroom', 'Living Room']
-
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function Garden() {
-  const navigate                         = useNavigate()
-  const { getUser, getPlants, markReminder, getLocations, addLocation, updateLocation, deleteLocation } = useStorage()
+  const navigate = useNavigate()
+  const { getUser, getPlants, markReminder, getLocations, addLocation } = useStorage()
 
-  const [, setTick]           = useState(0)
-  const [checkmarks, setCheckmarks]           = useState({})  // keyed "plantId:type"
-  const [calendarOpen, setCalendarOpen]       = useState(false)
-  const [weather, setWeather]                 = useState(null)
-  const [activeRoom, setActiveRoom]           = useState('All')
-  const [, setLocTick]                        = useState(0)   // bump to re-read locations
-  const [activeLocationId, setActiveLocationId] = useState('all')
-  const [locationSheet, setLocationSheet]     = useState(null) // null | 'add' | location obj
-  const [pendingDeleteId, setPendingDeleteId] = useState(null) // long-press target
-  const longPressTimer                        = useRef(null)
+  const [, setTick]         = useState(0)
+  const [checkmarks, setCheckmarks]     = useState({})  // keyed "plantId:type"
+  const [calendarOpen, setCalendarOpen] = useState(false)
+  const [weather, setWeather]           = useState(null)
+  const [addSheetOpen, setAddSheetOpen] = useState(false)
 
   const user   = getUser()
   const plants = getPlants()
@@ -138,8 +131,8 @@ export default function Garden() {
 
   if (!user) return null
 
-  const month        = new Date().getMonth()
-  const needsWater   = plants.filter(p => isReminderDue(p.reminders?.watering)).length
+  const month      = new Date().getMonth()
+  const needsWater = plants.filter(p => isReminderDue(p.reminders?.watering)).length
   const refDate = user.joinedDate
     || plants.reduce((earliest, p) => {
         if (!p.addedDate) return earliest
@@ -148,20 +141,17 @@ export default function Garden() {
   const daysJoined = refDate
     ? Math.max(1, Math.floor((Date.now() - new Date(refDate).getTime()) / (1000 * 60 * 60 * 24)))
     : 0
-  const locations      = getLocations()
-  const seasonalTip    = getSeasonalTip(month, user.zone || 'Z16')
-  const greeting       = getGreeting()
-  const filteredPlants = plants
-    .filter(p => activeRoom === 'All'   || p.room       === activeRoom)
-    .filter(p => activeLocationId === 'all' || p.locationId === activeLocationId)
+  const locations   = getLocations()
+  const seasonalTip = getSeasonalTip(month, user.zone || 'Z16')
+  const greeting    = getGreeting()
 
   // ─── Styles ──────────────────────────────────────────────────────────────────
 
   const page = {
-    minHeight:   '100svh',
-    background:  '#f0ede6',
-    fontFamily:  'var(--font-body)',
-    color:       'var(--text)',
+    minHeight:     '100svh',
+    background:    '#f0ede6',
+    fontFamily:    'var(--font-body)',
+    color:         'var(--text)',
     paddingBottom: '88px',
   }
 
@@ -183,12 +173,12 @@ export default function Garden() {
           {greeting} 👋
         </p>
         <h1 style={{
-          fontFamily:   'var(--font-display)',
-          fontWeight:   500,
-          fontSize:     '26px',
-          lineHeight:   1.2,
-          margin:       '0 0 14px',
-          color:        'var(--text)',
+          fontFamily: 'var(--font-display)',
+          fontWeight: 500,
+          fontSize:   '26px',
+          lineHeight: 1.2,
+          margin:     '0 0 14px',
+          color:      'var(--text)',
         }}>
           <em style={{ fontStyle: 'italic' }}>{user.name}</em>'s garden
         </h1>
@@ -210,30 +200,30 @@ export default function Garden() {
 
         {weather && (
           <div style={{
-            display:        'flex',
-            alignItems:     'center',
-            gap:            '14px',
-            marginTop:      '14px',
-            padding:        '12px 16px',
-            background:     'var(--green-light)',
-            borderRadius:   '12px',
+            display:      'flex',
+            alignItems:   'center',
+            gap:          '14px',
+            marginTop:    '14px',
+            padding:      '12px 16px',
+            background:   'var(--green-light)',
+            borderRadius: '12px',
           }}>
             <div style={{ fontSize: '26px', lineHeight: 1 }}>
               {weather.temp >= 35 ? '🌡️' : weather.temp >= 25 ? '☀️' : weather.temp >= 15 ? '⛅' : '🌨️'}
             </div>
             <div style={{ flex: 1 }}>
               <div style={{
-                fontSize:   '13px',
-                fontWeight: 600,
-                color:      'var(--green-dark)',
+                fontSize:     '13px',
+                fontWeight:   600,
+                color:        'var(--green-dark)',
                 marginBottom: '2px',
               }}>
                 {weather.temp}°C &nbsp;·&nbsp; 💧 {weather.humidity}%
               </div>
               <div style={{
-                fontSize:    '12px',
-                color:       'var(--green-dark)',
-                opacity:     0.8,
+                fontSize:      '12px',
+                color:         'var(--green-dark)',
+                opacity:       0.8,
                 textTransform: 'capitalize',
               }}>
                 {weather.description}{weather.city ? ` · ${weather.city}` : ''}
@@ -245,10 +235,10 @@ export default function Garden() {
 
       {/* ── Today strip ───────────────────────────────────────────────────── */}
       <div style={{
-        display:               'grid',
-        gridTemplateColumns:   '1fr 1fr 1fr',
-        gap:                   '8px',
-        margin:                '0 16px 12px',
+        display:             'grid',
+        gridTemplateColumns: '1fr 1fr 1fr',
+        gap:                 '8px',
+        margin:              '0 16px 12px',
       }}>
         {[
           {
@@ -282,11 +272,11 @@ export default function Garden() {
               {stat.emoji}
             </div>
             <div style={{
-              fontFamily: 'var(--font-display)',
-              fontWeight: 500,
-              fontSize:   '24px',
-              lineHeight: 1,
-              color:      stat.alert ? '#D97706' : 'var(--text)',
+              fontFamily:   'var(--font-display)',
+              fontWeight:   500,
+              fontSize:     '24px',
+              lineHeight:   1,
+              color:        stat.alert ? '#D97706' : 'var(--text)',
               marginBottom: '5px',
             }}>
               {stat.value}
@@ -311,200 +301,149 @@ export default function Garden() {
         color:        '#fff',
       }}>
         <p style={{
-          fontSize:     '11px',
-          fontWeight:   600,
+          fontSize:      '11px',
+          fontWeight:    600,
           textTransform: 'uppercase',
           letterSpacing: '0.6px',
-          margin:       '0 0 5px',
-          opacity:      0.75,
+          margin:        '0 0 5px',
+          opacity:       0.75,
         }}>
           Seasonal tip
         </p>
-        <p style={{
-          fontSize:   '14px',
-          margin:     0,
-          lineHeight: 1.55,
-        }}>
+        <p style={{ fontSize: '14px', margin: 0, lineHeight: 1.55 }}>
           {seasonalTip}
         </p>
       </div>
 
       {/* ── My Locations ──────────────────────────────────────────────────── */}
       <div style={{ margin: '0 16px 12px' }}>
-        <h2 style={{
-          fontFamily:  'var(--font-display)',
-          fontWeight:  500,
-          fontSize:    '20px',
-          margin:      '0 0 12px',
-          color:       'var(--text)',
-        }}>
-          My Locations
-        </h2>
 
+        {/* Section header with pinned + button */}
         <div style={{
-          display:                 'flex',
-          gap:                     '10px',
-          overflowX:               'auto',
-          WebkitOverflowScrolling: 'touch',
-          scrollbarWidth:          'none',
-          msOverflowStyle:         'none',
-          paddingBottom:           '4px',
+          display:        'flex',
+          alignItems:     'center',
+          justifyContent: 'space-between',
+          marginBottom:   '12px',
         }}>
-
-          {/* All card */}
-          {(() => {
-            const active = activeLocationId === 'all'
-            return (
-              <div
-                onClick={() => { setActiveLocationId('all'); setPendingDeleteId(null) }}
-                style={{
-                  flexShrink:   0,
-                  width:        '80px',
-                  padding:      '12px 8px',
-                  borderRadius: '14px',
-                  background:   active ? 'var(--green)' : 'var(--cream)',
-                  border:       `1.5px solid ${active ? 'var(--green)' : 'var(--border)'}`,
-                  display:      'flex',
-                  flexDirection: 'column',
-                  alignItems:   'center',
-                  gap:          '6px',
-                  cursor:       'pointer',
-                  transition:   'all 0.15s',
-                }}
-              >
-                <span style={{ fontSize: '24px', lineHeight: 1 }}>🌱</span>
-                <span style={{
-                  fontSize:   '11px',
-                  fontWeight: active ? 600 : 400,
-                  color:      active ? '#fff' : 'var(--text)',
-                  fontFamily: 'var(--font-body)',
-                  textAlign:  'center',
-                  lineHeight: 1.2,
-                }}>
-                  All
-                </span>
-              </div>
-            )
-          })()}
-
-          {/* Location cards */}
-          {locations.map(loc => {
-            const active    = activeLocationId === loc.id
-            const delTarget = pendingDeleteId === loc.id
-            return (
-              <div
-                key={loc.id}
-                style={{ flexShrink: 0, position: 'relative' }}
-                onPointerDown={() => {
-                  longPressTimer.current = setTimeout(() => setPendingDeleteId(loc.id), 600)
-                }}
-                onPointerUp={() => clearTimeout(longPressTimer.current)}
-                onPointerLeave={() => clearTimeout(longPressTimer.current)}
-              >
-                <div
-                  onClick={() => {
-                    if (delTarget) { setPendingDeleteId(null); return }
-                    setActiveLocationId(loc.id)
-                  }}
-                  style={{
-                    width:        '80px',
-                    padding:      '12px 8px',
-                    borderRadius: '14px',
-                    background:   delTarget ? '#FEE2E2' : active ? 'var(--green)' : 'var(--cream)',
-                    border:       `1.5px solid ${delTarget ? '#DC2626' : active ? 'var(--green)' : 'var(--border)'}`,
-                    display:      'flex',
-                    flexDirection: 'column',
-                    alignItems:   'center',
-                    gap:          '6px',
-                    cursor:       'pointer',
-                    transition:   'all 0.15s',
-                  }}
-                >
-                  <span style={{ fontSize: '24px', lineHeight: 1 }}>{loc.icon}</span>
-                  <span style={{
-                    fontSize:     '11px',
-                    fontWeight:   active ? 600 : 400,
-                    color:        delTarget ? '#DC2626' : active ? '#fff' : 'var(--text)',
-                    fontFamily:   'var(--font-body)',
-                    textAlign:    'center',
-                    lineHeight:   1.2,
-                    whiteSpace:   'nowrap',
-                    overflow:     'hidden',
-                    textOverflow: 'ellipsis',
-                    maxWidth:     '64px',
-                  }}>
-                    {delTarget ? 'Delete?' : loc.name}
-                  </span>
-                </div>
-
-                {/* Confirm delete (long-press activated) */}
-                {delTarget && (
-                  <div style={{
-                    position:   'absolute',
-                    top:        '-8px',
-                    right:      '-8px',
-                    display:    'flex',
-                    gap:        '4px',
-                    zIndex:     2,
-                  }}>
-                    <button
-                      onClick={e => { e.stopPropagation(); deleteLocation(loc.id); setPendingDeleteId(null); if (activeLocationId === loc.id) setActiveLocationId('all'); setLocTick(t => t + 1) }}
-                      style={{
-                        width: '22px', height: '22px', borderRadius: '50%',
-                        background: '#DC2626', color: '#fff', border: 'none',
-                        fontSize: '13px', cursor: 'pointer', lineHeight: 1,
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontFamily: 'var(--font-body)',
-                      }}
-                    >✕</button>
-                  </div>
-                )}
-
-                {/* Edit pencil */}
-                {!delTarget && (
-                  <button
-                    onClick={e => { e.stopPropagation(); setLocationSheet(loc) }}
-                    style={{
-                      position: 'absolute', top: '-6px', right: '-6px',
-                      width: '20px', height: '20px', borderRadius: '50%',
-                      background: '#fff', border: '1px solid var(--border)',
-                      fontSize: '10px', cursor: 'pointer', lineHeight: 1,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      padding: 0,
-                    }}
-                    aria-label={`Edit ${loc.name}`}
-                  >
-                    ✏️
-                  </button>
-                )}
-              </div>
-            )
-          })}
-
-          {/* Add location button */}
+          <h2 style={{
+            fontFamily: 'var(--font-display)',
+            fontWeight: 500,
+            fontSize:   '20px',
+            margin:     0,
+            color:      'var(--text)',
+          }}>
+            My Locations
+          </h2>
           <button
-            onClick={() => setLocationSheet('add')}
+            onClick={() => setAddSheetOpen(true)}
+            aria-label="Add location"
             style={{
-              flexShrink:   0,
-              width:        '80px',
-              padding:      '12px 8px',
-              borderRadius: '14px',
-              background:   'var(--cream)',
-              border:       '1.5px dashed var(--border)',
-              display:      'flex',
-              flexDirection: 'column',
-              alignItems:   'center',
-              gap:          '6px',
-              cursor:       'pointer',
-              color:        'var(--muted)',
-              fontFamily:   'var(--font-body)',
+              width:          '32px',
+              height:         '32px',
+              borderRadius:   '50%',
+              background:     'var(--green)',
+              color:          '#fff',
+              border:         'none',
+              fontSize:       '20px',
+              lineHeight:     1,
+              cursor:         'pointer',
+              display:        'flex',
+              alignItems:     'center',
+              justifyContent: 'center',
+              fontFamily:     'var(--font-body)',
+              flexShrink:     0,
             }}
           >
-            <span style={{ fontSize: '24px', lineHeight: 1, color: 'var(--green)' }}>＋</span>
-            <span style={{ fontSize: '11px', color: 'var(--muted)', textAlign: 'center', lineHeight: 1.2 }}>
-              Add
-            </span>
+            +
           </button>
+        </div>
+
+        <div style={{
+          display:  'flex',
+          flexWrap: 'wrap',
+          gap:      '8px',
+        }}>
+
+          {/* All card — default location for unassigned plants */}
+          <div
+            onClick={() => navigate('/location/all')}
+            style={{
+            width:           '62px',
+            height:          '62px',
+            minWidth:        '62px',
+            maxWidth:        '62px',
+            padding:         '8px 4px',
+            borderRadius:    '14px',
+            border:          '1.5px solid var(--green)',
+            background:      'var(--green)',
+            display:         'flex',
+            flexDirection:   'column',
+            alignItems:      'center',
+            justifyContent:  'center',
+            gap:             '4px',
+            boxSizing:       'border-box',
+            cursor:     'pointer',
+            flexShrink: 0,
+          }}>
+            <span style={{ fontSize: '22px', lineHeight: 1, color: '#fff' }}>🌱</span>
+            <span style={{
+              fontSize:     '10px',
+              fontFamily:   'var(--font-body)',
+              fontWeight:   500,
+              lineHeight:   1.2,
+              whiteSpace:   'nowrap',
+              overflow:     'hidden',
+              textOverflow: 'ellipsis',
+              maxWidth:     '100%',
+              textAlign:    'center',
+              color:        '#fff',
+            }}>
+              All
+            </span>
+          </div>
+
+          {/* Location cards — tap to open detail page */}
+          {locations.map(loc => (
+            <div
+              key={loc.id}
+              onClick={() => navigate(`/location/${loc.id}`)}
+              style={{
+                width:           '62px',
+                height:          '62px',
+                minWidth:        '62px',
+                maxWidth:        '62px',
+                padding:         '8px 4px',
+                borderRadius:    '14px',
+                border:          '1.5px solid var(--border)',
+                background:      '#fff',
+                display:         'flex',
+                flexDirection:   'column',
+                alignItems:      'center',
+                justifyContent:  'center',
+                gap:             '4px',
+                boxSizing:       'border-box',
+                cursor:     'pointer',
+                flexShrink: 0,
+              }}
+            >
+              <span style={{ fontSize: '22px', lineHeight: 1, color: 'var(--text)' }}>{loc.icon}</span>
+              <span style={{
+                fontSize:     '10px',
+                fontFamily:   'var(--font-body)',
+                fontWeight:   500,
+                lineHeight:   1.2,
+                whiteSpace:   'nowrap',
+                overflow:     'hidden',
+                textOverflow: 'ellipsis',
+                maxWidth:     '100%',
+                textAlign:    'center',
+                color:        'var(--text)',
+              }}>
+                {loc.name}
+              </span>
+            </div>
+          ))}
+
         </div>
       </div>
 
@@ -530,65 +469,25 @@ export default function Garden() {
           <button
             onClick={() => navigate('/add-plant')}
             style={{
-              width:      '36px',
-              height:     '36px',
-              borderRadius: '50%',
-              background: 'var(--green)',
-              color:      '#fff',
-              border:     'none',
-              fontSize:   '24px',
-              lineHeight: 1,
-              cursor:     'pointer',
-              display:    'flex',
-              alignItems: 'center',
+              width:          '36px',
+              height:         '36px',
+              borderRadius:   '50%',
+              background:     'var(--green)',
+              color:          '#fff',
+              border:         'none',
+              fontSize:       '24px',
+              lineHeight:     1,
+              cursor:         'pointer',
+              display:        'flex',
+              alignItems:     'center',
               justifyContent: 'center',
-              fontFamily: 'var(--font-body)',
-              flexShrink: 0,
+              fontFamily:     'var(--font-body)',
+              flexShrink:     0,
             }}
           >
             +
           </button>
         </div>
-
-        {/* ── Room filter tabs ──────────────────────────────────────────────── */}
-        {plants.length > 0 && (
-          <div style={{
-            display:                 'flex',
-            gap:                     '8px',
-            overflowX:               'auto',
-            WebkitOverflowScrolling: 'touch',
-            scrollbarWidth:          'none',
-            msOverflowStyle:         'none',
-            paddingBottom:           '2px',
-            marginBottom:            '12px',
-          }}>
-            {ROOM_FILTERS.map(r => {
-              const active = activeRoom === r
-              return (
-                <button
-                  key={r}
-                  onClick={() => setActiveRoom(r)}
-                  style={{
-                    flexShrink:   0,
-                    padding:      '6px 14px',
-                    fontSize:     '13px',
-                    fontWeight:   active ? 600 : 400,
-                    fontFamily:   'var(--font-body)',
-                    whiteSpace:   'nowrap',
-                    border:       `1.5px solid ${active ? 'var(--green)' : 'var(--border)'}`,
-                    borderRadius: '99px',
-                    background:   active ? 'var(--green)' : 'var(--cream)',
-                    color:        active ? '#fff' : 'var(--text)',
-                    cursor:       'pointer',
-                    transition:   'background 0.15s, color 0.15s, border-color 0.15s',
-                  }}
-                >
-                  {r}
-                </button>
-              )
-            })}
-          </div>
-        )}
 
         {plants.length === 0 ? (
 
@@ -601,11 +500,11 @@ export default function Garden() {
           }}>
             <div style={{ fontSize: '52px', marginBottom: '16px' }}>🪴</div>
             <p style={{
-              fontFamily:   'var(--font-display)',
-              fontWeight:   500,
-              fontSize:     '19px',
-              color:        'var(--text)',
-              margin:       '0 0 8px',
+              fontFamily: 'var(--font-display)',
+              fontWeight: 500,
+              fontSize:   '19px',
+              color:      'var(--text)',
+              margin:     '0 0 8px',
             }}>
               Your garden is empty
             </p>
@@ -620,42 +519,19 @@ export default function Garden() {
             <button
               onClick={() => navigate('/add-plant')}
               style={{
-                padding:    '14px 32px',
-                background: 'var(--green)',
-                color:      '#fff',
-                border:     'none',
+                padding:      '14px 32px',
+                background:   'var(--green)',
+                color:        '#fff',
+                border:       'none',
                 borderRadius: 'var(--radius)',
-                fontSize:   '15px',
-                fontWeight: 500,
-                fontFamily: 'var(--font-body)',
-                cursor:     'pointer',
+                fontSize:     '15px',
+                fontWeight:   500,
+                fontFamily:   'var(--font-body)',
+                cursor:       'pointer',
               }}
             >
               Add a plant
             </button>
-          </div>
-
-        ) : filteredPlants.length === 0 ? (
-
-          /* ── Filtered empty state ─────────────────────────────────────── */
-          <div style={{
-            background:   'var(--cream)',
-            borderRadius: 'var(--radius)',
-            padding:      '36px 24px',
-            textAlign:    'center',
-          }}>
-            <div style={{ fontSize: '40px', marginBottom: '12px' }}>🔍</div>
-            <p style={{
-              fontSize:   '15px',
-              fontWeight: 500,
-              color:      'var(--text)',
-              margin:     '0 0 6px',
-            }}>
-              No plants in {activeRoom}
-            </p>
-            <p style={{ fontSize: '13px', color: 'var(--muted)', margin: 0 }}>
-              Add a room when adding a new plant
-            </p>
           </div>
 
         ) : (
@@ -666,7 +542,7 @@ export default function Garden() {
             gridTemplateColumns: '1fr 1fr',
             gap:                 '12px',
           }}>
-            {filteredPlants.map(plant => {
+            {plants.map(plant => {
               const status        = getHealthStatus(plant)
               const lastCompleted = plant.reminders?.watering?.lastCompleted
               const daysAgo       = lastCompleted ? daysSince(lastCompleted) : null
@@ -717,13 +593,13 @@ export default function Garden() {
                   {/* Card body */}
                   <div style={{ padding: '10px 12px 12px' }}>
                     <p style={{
-                      fontWeight:     500,
-                      fontSize:       '14px',
-                      margin:         '0 0 4px',
-                      color:          'var(--text)',
-                      whiteSpace:     'nowrap',
-                      overflow:       'hidden',
-                      textOverflow:   'ellipsis',
+                      fontWeight:   500,
+                      fontSize:     '14px',
+                      margin:       '0 0 4px',
+                      color:        'var(--text)',
+                      whiteSpace:   'nowrap',
+                      overflow:     'hidden',
+                      textOverflow: 'ellipsis',
                     }}>
                       {plant.name}
                     </p>
@@ -840,26 +716,13 @@ export default function Garden() {
         />
       )}
 
-      {locationSheet && (
+      {addSheetOpen && (
         <AddLocationSheet
-          existing={locationSheet === 'add' ? undefined : locationSheet}
-          onClose={() => setLocationSheet(null)}
+          onClose={() => setAddSheetOpen(false)}
           onSave={data => {
-            if (locationSheet === 'add') {
-              addLocation(data)
-            } else {
-              updateLocation(locationSheet.id, data)
-            }
-            setLocationSheet(null)
-            setLocTick(t => t + 1)
-          }}
-          onDelete={() => {
-            if (locationSheet !== 'add') {
-              deleteLocation(locationSheet.id)
-              if (activeLocationId === locationSheet.id) setActiveLocationId('all')
-            }
-            setLocationSheet(null)
-            setLocTick(t => t + 1)
+            const loc = addLocation(data)
+            setAddSheetOpen(false)
+            navigate(`/location/${loc.id}`)
           }}
         />
       )}
