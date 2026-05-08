@@ -121,10 +121,40 @@ export function useStorage() {
     }
   }
 
+  // ─── Locations ───────────────────────────────────────────────────────────────
+
+  function getLocations() {
+    try { return JSON.parse(localStorage.getItem('locations') || '[]') }
+    catch { return [] }
+  }
+
+  function saveLocations(locs) {
+    localStorage.setItem('locations', JSON.stringify(locs))
+  }
+
+  function addLocation(data) {
+    const locs = getLocations()
+    const loc = { ...data, id: 'loc_' + Date.now(), createdAt: new Date().toISOString() }
+    locs.push(loc)
+    saveLocations(locs)
+    return loc
+  }
+
+  function updateLocation(id, updates) {
+    const locs = getLocations()
+    const idx  = locs.findIndex(l => l.id === id)
+    if (idx !== -1) { locs[idx] = { ...locs[idx], ...updates }; saveLocations(locs) }
+  }
+
+  function deleteLocation(id) {
+    saveLocations(getLocations().filter(l => l.id !== id))
+  }
+
   return {
     saveUser, getUser, hasUser, clearUser,
     savePlants, getPlants, addPlant,
     updatePlant, deletePlant, waterPlant,
     markReminder, saveDiagnosis,
+    getLocations, addLocation, updateLocation, deleteLocation,
   };
 }

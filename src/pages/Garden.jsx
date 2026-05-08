@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Droplet, SprayCan, Sprout, RotateCw, Scissors, Flower2, Check } from 'lucide-react'
 import { useStorage } from '../hooks/useStorage.js'
 import { daysSince, isReminderDue, getDueReminders, REMINDER_TYPES } from '../utils/reminders.js'
 import BottomNav from '../components/BottomNav.jsx'
 import CareCalendar from '../components/CareCalendar.jsx'
+import AddLocationSheet from '../components/AddLocationSheet.jsx'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -75,16 +76,24 @@ function getSeasonalTip(month, zoneCode) {
 
 const WEATHER_API_KEY = import.meta.env.VITE_WEATHER_API_KEY
 
+const ROOM_FILTERS = ['All', 'Indoor', 'Outdoor', 'Balcony', 'Office', 'Bedroom', 'Living Room']
+
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function Garden() {
   const navigate                         = useNavigate()
-  const { getUser, getPlants, markReminder } = useStorage()
+  const { getUser, getPlants, markReminder, getLocations, addLocation, updateLocation, deleteLocation } = useStorage()
 
-  const [, setTick]      = useState(0)
-  const [checkmarks, setCheckmarks] = useState({})  // keyed "plantId:type"
-  const [calendarOpen, setCalendarOpen] = useState(false)
-  const [weather, setWeather] = useState(null)
+  const [, setTick]           = useState(0)
+  const [checkmarks, setCheckmarks]           = useState({})  // keyed "plantId:type"
+  const [calendarOpen, setCalendarOpen]       = useState(false)
+  const [weather, setWeather]                 = useState(null)
+  const [activeRoom, setActiveRoom]           = useState('All')
+  const [, setLocTick]                        = useState(0)   // bump to re-read locations
+  const [activeLocationId, setActiveLocationId] = useState('all')
+  const [locationSheet, setLocationSheet]     = useState(null) // null | 'add' | location obj
+  const [pendingDeleteId, setPendingDeleteId] = useState(null) // long-press target
+  const longPressTimer                        = useRef(null)
 
   const user   = getUser()
   const plants = getPlants()
@@ -139,8 +148,12 @@ export default function Garden() {
   const daysJoined = refDate
     ? Math.max(1, Math.floor((Date.now() - new Date(refDate).getTime()) / (1000 * 60 * 60 * 24)))
     : 0
-  const seasonalTip  = getSeasonalTip(month, user.zone || 'Z16')
-  const greeting     = getGreeting()
+  const locations      = getLocations()
+  const seasonalTip    = getSeasonalTip(month, user.zone || 'Z16')
+  const greeting       = getGreeting()
+  const filteredPlants = plants
+    .filter(p => activeRoom === 'All'   || p.room       === activeRoom)
+    .filter(p => activeLocationId === 'all' || p.locationId === activeLocationId)
 
   // ─── Styles ──────────────────────────────────────────────────────────────────
 
@@ -316,6 +329,185 @@ export default function Garden() {
         </p>
       </div>
 
+      {/* ── My Locations ──────────────────────────────────────────────────── */}
+      <div style={{ margin: '0 16px 12px' }}>
+        <h2 style={{
+          fontFamily:  'var(--font-display)',
+          fontWeight:  500,
+          fontSize:    '20px',
+          margin:      '0 0 12px',
+          color:       'var(--text)',
+        }}>
+          My Locations
+        </h2>
+
+        <div style={{
+          display:                 'flex',
+          gap:                     '10px',
+          overflowX:               'auto',
+          WebkitOverflowScrolling: 'touch',
+          scrollbarWidth:          'none',
+          msOverflowStyle:         'none',
+          paddingBottom:           '4px',
+        }}>
+
+          {/* All card */}
+          {(() => {
+            const active = activeLocationId === 'all'
+            return (
+              <div
+                onClick={() => { setActiveLocationId('all'); setPendingDeleteId(null) }}
+                style={{
+                  flexShrink:   0,
+                  width:        '80px',
+                  padding:      '12px 8px',
+                  borderRadius: '14px',
+                  background:   active ? 'var(--green)' : 'var(--cream)',
+                  border:       `1.5px solid ${active ? 'var(--green)' : 'var(--border)'}`,
+                  display:      'flex',
+                  flexDirection: 'column',
+                  alignItems:   'center',
+                  gap:          '6px',
+                  cursor:       'pointer',
+                  transition:   'all 0.15s',
+                }}
+              >
+                <span style={{ fontSize: '24px', lineHeight: 1 }}>🌱</span>
+                <span style={{
+                  fontSize:   '11px',
+                  fontWeight: active ? 600 : 400,
+                  color:      active ? '#fff' : 'var(--text)',
+                  fontFamily: 'var(--font-body)',
+                  textAlign:  'center',
+                  lineHeight: 1.2,
+                }}>
+                  All
+                </span>
+              </div>
+            )
+          })()}
+
+          {/* Location cards */}
+          {locations.map(loc => {
+            const active    = activeLocationId === loc.id
+            const delTarget = pendingDeleteId === loc.id
+            return (
+              <div
+                key={loc.id}
+                style={{ flexShrink: 0, position: 'relative' }}
+                onPointerDown={() => {
+                  longPressTimer.current = setTimeout(() => setPendingDeleteId(loc.id), 600)
+                }}
+                onPointerUp={() => clearTimeout(longPressTimer.current)}
+                onPointerLeave={() => clearTimeout(longPressTimer.current)}
+              >
+                <div
+                  onClick={() => {
+                    if (delTarget) { setPendingDeleteId(null); return }
+                    setActiveLocationId(loc.id)
+                  }}
+                  style={{
+                    width:        '80px',
+                    padding:      '12px 8px',
+                    borderRadius: '14px',
+                    background:   delTarget ? '#FEE2E2' : active ? 'var(--green)' : 'var(--cream)',
+                    border:       `1.5px solid ${delTarget ? '#DC2626' : active ? 'var(--green)' : 'var(--border)'}`,
+                    display:      'flex',
+                    flexDirection: 'column',
+                    alignItems:   'center',
+                    gap:          '6px',
+                    cursor:       'pointer',
+                    transition:   'all 0.15s',
+                  }}
+                >
+                  <span style={{ fontSize: '24px', lineHeight: 1 }}>{loc.icon}</span>
+                  <span style={{
+                    fontSize:     '11px',
+                    fontWeight:   active ? 600 : 400,
+                    color:        delTarget ? '#DC2626' : active ? '#fff' : 'var(--text)',
+                    fontFamily:   'var(--font-body)',
+                    textAlign:    'center',
+                    lineHeight:   1.2,
+                    whiteSpace:   'nowrap',
+                    overflow:     'hidden',
+                    textOverflow: 'ellipsis',
+                    maxWidth:     '64px',
+                  }}>
+                    {delTarget ? 'Delete?' : loc.name}
+                  </span>
+                </div>
+
+                {/* Confirm delete (long-press activated) */}
+                {delTarget && (
+                  <div style={{
+                    position:   'absolute',
+                    top:        '-8px',
+                    right:      '-8px',
+                    display:    'flex',
+                    gap:        '4px',
+                    zIndex:     2,
+                  }}>
+                    <button
+                      onClick={e => { e.stopPropagation(); deleteLocation(loc.id); setPendingDeleteId(null); if (activeLocationId === loc.id) setActiveLocationId('all'); setLocTick(t => t + 1) }}
+                      style={{
+                        width: '22px', height: '22px', borderRadius: '50%',
+                        background: '#DC2626', color: '#fff', border: 'none',
+                        fontSize: '13px', cursor: 'pointer', lineHeight: 1,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontFamily: 'var(--font-body)',
+                      }}
+                    >✕</button>
+                  </div>
+                )}
+
+                {/* Edit pencil */}
+                {!delTarget && (
+                  <button
+                    onClick={e => { e.stopPropagation(); setLocationSheet(loc) }}
+                    style={{
+                      position: 'absolute', top: '-6px', right: '-6px',
+                      width: '20px', height: '20px', borderRadius: '50%',
+                      background: '#fff', border: '1px solid var(--border)',
+                      fontSize: '10px', cursor: 'pointer', lineHeight: 1,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      padding: 0,
+                    }}
+                    aria-label={`Edit ${loc.name}`}
+                  >
+                    ✏️
+                  </button>
+                )}
+              </div>
+            )
+          })}
+
+          {/* Add location button */}
+          <button
+            onClick={() => setLocationSheet('add')}
+            style={{
+              flexShrink:   0,
+              width:        '80px',
+              padding:      '12px 8px',
+              borderRadius: '14px',
+              background:   'var(--cream)',
+              border:       '1.5px dashed var(--border)',
+              display:      'flex',
+              flexDirection: 'column',
+              alignItems:   'center',
+              gap:          '6px',
+              cursor:       'pointer',
+              color:        'var(--muted)',
+              fontFamily:   'var(--font-body)',
+            }}
+          >
+            <span style={{ fontSize: '24px', lineHeight: 1, color: 'var(--green)' }}>＋</span>
+            <span style={{ fontSize: '11px', color: 'var(--muted)', textAlign: 'center', lineHeight: 1.2 }}>
+              Add
+            </span>
+          </button>
+        </div>
+      </div>
+
       {/* ── Plant grid ────────────────────────────────────────────────────── */}
       <div style={{ margin: '0 16px' }}>
 
@@ -357,6 +549,46 @@ export default function Garden() {
             +
           </button>
         </div>
+
+        {/* ── Room filter tabs ──────────────────────────────────────────────── */}
+        {plants.length > 0 && (
+          <div style={{
+            display:                 'flex',
+            gap:                     '8px',
+            overflowX:               'auto',
+            WebkitOverflowScrolling: 'touch',
+            scrollbarWidth:          'none',
+            msOverflowStyle:         'none',
+            paddingBottom:           '2px',
+            marginBottom:            '12px',
+          }}>
+            {ROOM_FILTERS.map(r => {
+              const active = activeRoom === r
+              return (
+                <button
+                  key={r}
+                  onClick={() => setActiveRoom(r)}
+                  style={{
+                    flexShrink:   0,
+                    padding:      '6px 14px',
+                    fontSize:     '13px',
+                    fontWeight:   active ? 600 : 400,
+                    fontFamily:   'var(--font-body)',
+                    whiteSpace:   'nowrap',
+                    border:       `1.5px solid ${active ? 'var(--green)' : 'var(--border)'}`,
+                    borderRadius: '99px',
+                    background:   active ? 'var(--green)' : 'var(--cream)',
+                    color:        active ? '#fff' : 'var(--text)',
+                    cursor:       'pointer',
+                    transition:   'background 0.15s, color 0.15s, border-color 0.15s',
+                  }}
+                >
+                  {r}
+                </button>
+              )
+            })}
+          </div>
+        )}
 
         {plants.length === 0 ? (
 
@@ -403,6 +635,29 @@ export default function Garden() {
             </button>
           </div>
 
+        ) : filteredPlants.length === 0 ? (
+
+          /* ── Filtered empty state ─────────────────────────────────────── */
+          <div style={{
+            background:   'var(--cream)',
+            borderRadius: 'var(--radius)',
+            padding:      '36px 24px',
+            textAlign:    'center',
+          }}>
+            <div style={{ fontSize: '40px', marginBottom: '12px' }}>🔍</div>
+            <p style={{
+              fontSize:   '15px',
+              fontWeight: 500,
+              color:      'var(--text)',
+              margin:     '0 0 6px',
+            }}>
+              No plants in {activeRoom}
+            </p>
+            <p style={{ fontSize: '13px', color: 'var(--muted)', margin: 0 }}>
+              Add a room when adding a new plant
+            </p>
+          </div>
+
         ) : (
 
           /* ── 2-col grid ───────────────────────────────────────────────── */
@@ -411,7 +666,7 @@ export default function Garden() {
             gridTemplateColumns: '1fr 1fr',
             gap:                 '12px',
           }}>
-            {plants.map(plant => {
+            {filteredPlants.map(plant => {
               const status        = getHealthStatus(plant)
               const lastCompleted = plant.reminders?.watering?.lastCompleted
               const daysAgo       = lastCompleted ? daysSince(lastCompleted) : null
@@ -464,7 +719,7 @@ export default function Garden() {
                     <p style={{
                       fontWeight:     500,
                       fontSize:       '14px',
-                      margin:         '0 0 6px',
+                      margin:         '0 0 4px',
                       color:          'var(--text)',
                       whiteSpace:     'nowrap',
                       overflow:       'hidden',
@@ -472,6 +727,39 @@ export default function Garden() {
                     }}>
                       {plant.name}
                     </p>
+                    {(plant.room || plant.locationId) && (
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginBottom: '5px' }}>
+                        {plant.locationId && (() => {
+                          const loc = locations.find(l => l.id === plant.locationId)
+                          return loc ? (
+                            <span style={{
+                              display:      'inline-block',
+                              fontSize:     '10px',
+                              fontWeight:   500,
+                              color:        'var(--green-dark)',
+                              background:   'var(--green-light)',
+                              borderRadius: '99px',
+                              padding:      '2px 8px',
+                            }}>
+                              {loc.icon} {loc.name}
+                            </span>
+                          ) : null
+                        })()}
+                        {plant.room && !plant.locationId && (
+                          <span style={{
+                            display:      'inline-block',
+                            fontSize:     '10px',
+                            fontWeight:   500,
+                            color:        'var(--green-dark)',
+                            background:   'var(--green-light)',
+                            borderRadius: '99px',
+                            padding:      '2px 8px',
+                          }}>
+                            {plant.room}
+                          </span>
+                        )}
+                      </div>
+                    )}
                     <div style={{
                       display:        'flex',
                       alignItems:     'center',
@@ -549,6 +837,30 @@ export default function Garden() {
         <CareCalendar
           plants={plants}
           onClose={() => setCalendarOpen(false)}
+        />
+      )}
+
+      {locationSheet && (
+        <AddLocationSheet
+          existing={locationSheet === 'add' ? undefined : locationSheet}
+          onClose={() => setLocationSheet(null)}
+          onSave={data => {
+            if (locationSheet === 'add') {
+              addLocation(data)
+            } else {
+              updateLocation(locationSheet.id, data)
+            }
+            setLocationSheet(null)
+            setLocTick(t => t + 1)
+          }}
+          onDelete={() => {
+            if (locationSheet !== 'add') {
+              deleteLocation(locationSheet.id)
+              if (activeLocationId === locationSheet.id) setActiveLocationId('all')
+            }
+            setLocationSheet(null)
+            setLocTick(t => t + 1)
+          }}
         />
       )}
     </div>

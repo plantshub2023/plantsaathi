@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { PLANTS } from '../data/plants.js'
 import { useStorage } from '../hooks/useStorage.js'
 
+const ROOMS = ['Indoor', 'Outdoor', 'Balcony', 'Office', 'Bedroom', 'Living Room']
+
 // ─── Photo → base64 helper ────────────────────────────────────────────────────
 // Stage 1: FileReader reads the raw file into a base64 data URL.
 // Stage 2: canvas resizes it to ≤800px JPEG 80% to fit localStorage.
@@ -49,13 +51,16 @@ export default function AddPlant() {
   const [notes,        setNotes]        = useState('')
   const [waterDays,    setWaterDays]    = useState(undefined)  // from catalog pick
   const [category,     setCategory]     = useState(undefined)  // from catalog pick
+  const [room,         setRoom]         = useState('')
+  const [locationId,   setLocationId]   = useState('')
   const [nameFocused,  setNameFocused]  = useState(false)
   const [notesFocused, setNotesFocused] = useState(false)
 
   const cameraInputRef  = useRef(null)
   const galleryInputRef = useRef(null)
   const navigate = useNavigate()
-  const { addPlant } = useStorage()
+  const { addPlant, getLocations } = useStorage()
+  const locations = getLocations()
 
   async function handleFile(e) {
     const file = e.target.files?.[0]
@@ -87,6 +92,8 @@ export default function AddPlant() {
       photo,
       waterDays,
       category,
+      room:       room       || undefined,
+      locationId: locationId || undefined,
     })
     navigate('/garden')
   }
@@ -406,7 +413,7 @@ export default function AddPlant() {
         </div>
 
         {/* Notes */}
-        <div>
+        <div style={{ marginBottom: '20px' }}>
           <label style={labelStyle}>
             Notes{' '}
             <span style={{ textTransform: 'none', fontWeight: 400, opacity: 0.65 }}>
@@ -426,6 +433,95 @@ export default function AddPlant() {
             onFocus={() => setNotesFocused(true)}
             onBlur={() => setNotesFocused(false)}
           />
+        </div>
+
+        {/* Location */}
+        {locations.length > 0 && (
+          <div style={{ marginBottom: '20px' }}>
+            <label style={labelStyle}>
+              Location{' '}
+              <span style={{ textTransform: 'none', fontWeight: 400, opacity: 0.65 }}>
+                (optional)
+              </span>
+            </label>
+            <div style={{
+              position:     'relative',
+              background:   '#fff',
+              border:       '1.5px solid var(--border)',
+              borderRadius: '12px',
+              overflow:     'hidden',
+            }}>
+              <select
+                value={locationId}
+                onChange={e => setLocationId(e.target.value)}
+                style={{
+                  width:            '100%',
+                  padding:          '14px 40px 14px 16px',
+                  fontSize:         '15px',
+                  fontFamily:       'var(--font-body)',
+                  color:            locationId ? 'var(--text)' : 'var(--muted)',
+                  background:       'transparent',
+                  border:           'none',
+                  outline:          'none',
+                  appearance:       'none',
+                  WebkitAppearance: 'none',
+                  cursor:           'pointer',
+                }}
+              >
+                <option value="">No location selected</option>
+                {locations.map(loc => (
+                  <option key={loc.id} value={loc.id}>
+                    {loc.icon}  {loc.name}
+                  </option>
+                ))}
+              </select>
+              <span style={{
+                position:      'absolute',
+                right:         '16px',
+                top:           '50%',
+                transform:     'translateY(-50%)',
+                pointerEvents: 'none',
+                color:         'var(--muted)',
+                fontSize:      '11px',
+              }}>▼</span>
+            </div>
+          </div>
+        )}
+
+        {/* Room */}
+        <div>
+          <label style={labelStyle}>
+            Room{' '}
+            <span style={{ textTransform: 'none', fontWeight: 400, opacity: 0.65 }}>
+              (optional)
+            </span>
+          </label>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+            {ROOMS.map(r => {
+              const active = room === r
+              return (
+                <button
+                  key={r}
+                  type="button"
+                  onClick={() => setRoom(active ? '' : r)}
+                  style={{
+                    padding:      '8px 16px',
+                    fontSize:     '14px',
+                    fontFamily:   'var(--font-body)',
+                    fontWeight:   active ? 600 : 400,
+                    border:       `1.5px solid ${active ? 'var(--green)' : 'var(--border)'}`,
+                    borderRadius: '99px',
+                    background:   active ? 'var(--green)' : '#fff',
+                    color:        active ? '#fff' : 'var(--text)',
+                    cursor:       'pointer',
+                    transition:   'all 0.15s',
+                  }}
+                >
+                  {r}
+                </button>
+              )
+            })}
+          </div>
         </div>
 
       </div>
