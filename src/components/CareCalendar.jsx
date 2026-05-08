@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { createPortal } from 'react-dom'
 import { toDateKey } from '../utils/reminders.js'
 
 const MONTHS = [
@@ -65,12 +66,21 @@ export default function CareCalendar({ plants, onClose }) {
     }),
   ]
 
-  return (
+  return createPortal(
     <>
-      {/* Backdrop */}
+      {/* Backdrop — rendered on document.body so no scroll-container or
+          overflow-x:hidden ancestor can clip it on mobile */}
       <div
         onClick={onClose}
-        style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 200 }}
+        style={{
+          position:   'fixed',
+          top:        0,
+          right:      0,
+          bottom:     0,
+          left:       0,
+          background: 'rgba(0,0,0,0.45)',
+          zIndex:     200,
+        }}
       />
 
       {/* Sheet */}
@@ -208,6 +218,7 @@ export default function CareCalendar({ plants, onClose }) {
         </div>
 
       </div>
-    </>
+    </>,
+    document.body
   )
 }

@@ -750,15 +750,15 @@ Give care tips in this exact JSON format only:
         </div>
       </div>
 
-      {/* ── Plant Health ───────────────────────────────────────────────────── */}
+      {/* ── Plant Meters ───────────────────────────────────────────────────── */}
       <div style={card({ padding: '20px' })}>
-        <span style={sectionLabel}>Plant Health</span>
+        <span style={sectionLabel}>Plant Meters</span>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
-          <MeterBar icon="💧" label="Water Health"      pct={waterMeter.pct} color={waterMeter.color} status={waterMeter.label} />
-          <MeterBar icon="🌱" label="Fertilizer Health" pct={fertMeter.pct}  color={fertMeter.color}  status={fertMeter.label}  />
-          <MeterBar icon="☀️" label="Light"             pct={lightInfo.pct}  color="#1D9E75"          status={lightInfo.label}  />
-          <MeterBar icon="💧" label="Humidity"          pct={humidInfo.pct}      color="#1D9E75"          status={humidInfo.label}     />
-          <MeterBar icon="🪱" label="Soil Health"        pct={soilHealth.pct}     color={soilHealth.color}  status={soilHealth.label}    />
+          <MeterBar icon="💧" label="Water Meter"      pct={waterMeter.pct} color={waterMeter.color} status={waterMeter.label} />
+          <MeterBar icon="🌱" label="Fertilizer Meter" pct={fertMeter.pct}  color={fertMeter.color}  status={fertMeter.label}  />
+          <MeterBar icon="☀️" label="Light Meter"      pct={lightInfo.pct}  color="#1D9E75"          status={lightInfo.label}  />
+          <MeterBar icon="💧" label="Humidity Meter"   pct={humidInfo.pct}  color="#1D9E75"          status={humidInfo.label}  />
+          <MeterBar icon="🪱" label="Soil Meter"       pct={soilHealth.pct} color={soilHealth.color}  status={soilHealth.label} />
         </div>
       </div>
 
