@@ -45,7 +45,8 @@ Required schema:
     "soil":        "Well-draining sandy mix with compost",
     "sunlight":    "Bright indirect, 4–6 hours/day",
     "temperature": "18–28°C, avoid below 10°C",
-    "humidity":    "Moderate, 40–60%"
+    "humidity":    "Moderate, 40–60%",
+    "fertilizer":  "Balanced NPK (10-10-10), once a month during growing season"
   }
 }
 
@@ -53,7 +54,8 @@ Rules:
 - Set enabled=false for types that don't apply (e.g. misting for cacti, rotating for outdoor trees, pruning for small succulents).
 - frequencyDays must be an integer within: watering 1–14, misting 1–7, fertilizing 7–90, rotating 7–30, pruning 30–180, repotting 90–730.
 - Each reasoning: 1 sentence, ≤120 chars, mention the zone/season/plant trait that drives the value.
-- Each setupInfo value: ≤80 chars, plain language, no jargon.`
+- Each setupInfo value: ≤80 chars, plain language, no jargon.
+- fertilizer: 1 sentence max 100 chars — fertilizer type, NPK ratio if relevant, and frequency. Plain language, no jargon.`
 }
 
 // ─── Validation helpers ───────────────────────────────────────────────────────
@@ -145,6 +147,7 @@ export async function generateCarePlan({ plantName, category, zone, zoneName, ci
     sunlight:    typeof rawSetup.sunlight    === 'string' ? rawSetup.sunlight.slice(0, 120)    : '',
     temperature: typeof rawSetup.temperature === 'string' ? rawSetup.temperature.slice(0, 120) : '',
     humidity:    typeof rawSetup.humidity    === 'string' ? rawSetup.humidity.slice(0, 120)    : '',
+    fertilizer:  typeof rawSetup.fertilizer  === 'string' ? rawSetup.fertilizer.slice(0, 120)  : '',
   }
 
   return { reminders, setupInfo }
