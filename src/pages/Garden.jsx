@@ -80,17 +80,30 @@ function getSeasonalTip(month, zoneCode) {
 
 const WEATHER_API_KEY = import.meta.env.VITE_WEATHER_API_KEY
 
+// OpenWeatherMap condition id → emoji
+function weatherEmoji(id) {
+  if (id >= 200 && id < 300) return '⛈️'
+  if (id >= 300 && id < 400) return '🌦️'
+  if (id >= 500 && id < 600) return '🌧️'
+  if (id >= 600 && id < 700) return '❄️'
+  if (id >= 700 && id < 800) return '🌫️'
+  if (id === 800)            return '☀️'
+  if (id > 800)              return '⛅'
+  return '🌤️'
+}
+
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function Garden() {
   const navigate = useNavigate()
-  const { getUser, getPlants, markReminder, getLocations, addLocation } = useStorage()
+  const { getUser, saveUser, getPlants, markReminder, getLocations, addLocation } = useStorage()
 
-  const [, setTick]         = useState(0)
-  const [checkmarks, setCheckmarks]     = useState({})  // keyed "plantId:type"
-  const [calendarOpen, setCalendarOpen] = useState(false)
-  const [weather, setWeather]           = useState(null)
-  const [addSheetOpen, setAddSheetOpen] = useState(false)
+  const [, setTick]                         = useState(0)
+  const [checkmarks,     setCheckmarks]     = useState({})  // keyed "plantId:type"
+  const [calendarOpen,   setCalendarOpen]   = useState(false)
+  const [weather,        setWeather]        = useState(null)
+  const [forecast,       setForecast]       = useState([])
+  const [addSheetOpen,   setAddSheetOpen]   = useState(false)
   const [tasksSheetOpen, setTasksSheetOpen] = useState(false)
 
   const user   = getUser()
@@ -102,22 +115,54 @@ export default function Garden() {
 
   useEffect(() => {
     if (user?.lat && user?.lon) {
-      fetchWeather(user.lat, user.lon)
+      fetchWeather({ lat: user.lat, lon: user.lon })
+    } else if (user?.city) {
+      fetchWeather({ city: user.city })
     }
   }, [])
 
-  async function fetchWeather(lat, lon) {
+  async function fetchWeather({ lat, lon, city }) {
+    if (!WEATHER_API_KEY) return
     try {
-      const res = await fetch(
-        `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${WEATHER_API_KEY}&units=metric`
+      const params = (lat != null && lon != null)
+        ? `lat=${lat}&lon=${lon}`
+        : `q=${encodeURIComponent(city)},IN`
+
+      // Current weather
+      const res  = await fetch(
+        `https://api.openweathermap.org/data/2.5/weather?${params}&appid=${WEATHER_API_KEY}&units=metric`
       )
       const data = await res.json()
-      setWeather({
-        temp:        Math.round(data.main.temp),
-        humidity:    data.main.humidity,
-        description: data.weather[0].description,
-        city:        data.name,
-      })
+      if (data.cod !== 200) return  // /weather returns numeric 200 on success
+
+      setWeather(data)
+
+      // Persist resolved coords if we resolved via city
+      if ((lat == null || lon == null) && data.coord) {
+        const u = getUser()
+        if (u) saveUser({ ...u, lat: data.coord.lat, lon: data.coord.lon })
+      }
+
+      // 3-day forecast
+      const forecastRes  = await fetch(
+        `https://api.openweathermap.org/data/2.5/forecast?${params}&appid=${WEATHER_API_KEY}&units=metric&cnt=24`
+      )
+      const forecastData = await forecastRes.json()
+      if (forecastData.cod === '200' && Array.isArray(forecastData.list)) {
+        // One entry per day — pick the noon-ish reading (11:00–13:00 local)
+        const daily = []
+        const seen  = new Set()
+        forecastData.list.forEach(item => {
+          const date   = new Date(item.dt * 1000)
+          const dayKey = date.toDateString()
+          const hour   = date.getHours()
+          if (!seen.has(dayKey) && hour >= 11 && hour <= 13) {
+            seen.add(dayKey)
+            daily.push(item)
+          }
+        })
+        setForecast(daily.slice(0, 3))
+      }
     } catch {
       // silently skip — widget just won't show
     }
@@ -210,35 +255,94 @@ export default function Garden() {
 
         {weather && (
           <div style={{
-            display:      'flex',
-            alignItems:   'center',
-            gap:          '14px',
             marginTop:    '14px',
-            padding:      '12px 16px',
+            padding:      '14px 16px',
             background:   'var(--green-light)',
             borderRadius: '12px',
           }}>
-            <div style={{ fontSize: '26px', lineHeight: 1 }}>
-              {weather.temp >= 35 ? '🌡️' : weather.temp >= 25 ? '☀️' : weather.temp >= 15 ? '⛅' : '🌨️'}
+            {/* Today — temperature + condition + city */}
+            <div style={{
+              fontSize:   '32px',
+              fontWeight: 600,
+              color:      'var(--text)',
+              lineHeight: 1.05,
+            }}>
+              {weather.main.temp.toFixed(0)}°C
             </div>
-            <div style={{ flex: 1 }}>
-              <div style={{
-                fontSize:     '13px',
-                fontWeight:   600,
-                color:        'var(--green-dark)',
-                marginBottom: '2px',
-              }}>
-                {weather.temp}°C &nbsp;·&nbsp; 💧 {weather.humidity}%
-              </div>
-              <div style={{
-                fontSize:      '12px',
-                color:         'var(--green-dark)',
-                opacity:       0.8,
-                textTransform: 'capitalize',
-              }}>
-                {weather.description}{weather.city ? ` · ${weather.city}` : ''}
-              </div>
+            <div style={{
+              fontSize:      '14px',
+              color:         'var(--muted)',
+              textTransform: 'capitalize',
+              marginTop:     '2px',
+            }}>
+              {weather.weather[0].description}
             </div>
+            <div style={{
+              fontSize:  '12px',
+              color:     'var(--muted)',
+              marginTop: '2px',
+            }}>
+              {weather.name}
+            </div>
+
+            {/* Detail row */}
+            <div style={{
+              display:   'flex',
+              flexWrap:  'wrap',
+              gap:       '16px',
+              marginTop: '8px',
+              fontSize:  '12px',
+              color:     'var(--muted)',
+            }}>
+              <span>🌡️ Feels like {weather.main.feels_like.toFixed(0)}°C</span>
+              <span>💧 Humidity {weather.main.humidity}%</span>
+              <span>💨 Wind {(weather.wind.speed * 3.6).toFixed(0)} km/h</span>
+              {weather.clouds?.all !== undefined && (
+                <span>☁️ Clouds {weather.clouds.all}%</span>
+              )}
+            </div>
+
+            {/* 3-day forecast */}
+            {forecast.length > 0 && (
+              <>
+                <div style={{
+                  borderTop: '1px solid rgba(255,255,255,0.2)',
+                  margin:    '12px 0 8px',
+                }} />
+                <div style={{
+                  fontSize:      '11px',
+                  fontWeight:    600,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px',
+                  opacity:       0.8,
+                  marginBottom:  '8px',
+                  color:         'var(--text)',
+                }}>
+                  Next 3 days
+                </div>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  {forecast.map(item => (
+                    <div key={item.dt} style={{
+                      flex:         1,
+                      textAlign:    'center',
+                      padding:      '6px 4px',
+                      background:   'rgba(255,255,255,0.1)',
+                      borderRadius: '8px',
+                    }}>
+                      <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text)' }}>
+                        {new Date(item.dt * 1000).toLocaleDateString('en-IN', { weekday: 'short' })}
+                      </div>
+                      <div style={{ fontSize: '18px', lineHeight: 1.2 }}>
+                        {weatherEmoji(item.weather[0].id)}
+                      </div>
+                      <div style={{ fontSize: '12px', color: 'var(--text)' }}>
+                        {item.main.temp.toFixed(0)}°C
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
         )}
       </div>

@@ -148,6 +148,26 @@ export default function Profile() {
             }}>
               {user.zone} · {user.zoneName}
             </span>
+
+            {/* Edit Location */}
+            <div>
+              <button
+                onClick={() => navigate('/onboarding', { state: { startStep: 2 } })}
+                style={{
+                  background:   'transparent',
+                  border:       '1.5px solid var(--border)',
+                  color:        'var(--text)',
+                  borderRadius: 'var(--radius)',
+                  padding:      '8px 14px',
+                  fontSize:     '13px',
+                  fontFamily:   'var(--font-body)',
+                  cursor:       'pointer',
+                  marginTop:    '8px',
+                }}
+              >
+                ✏️ Edit Location
+              </button>
+            </div>
           </div>
         </div>
       </div>
