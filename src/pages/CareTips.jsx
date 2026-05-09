@@ -5,6 +5,11 @@ import { useStorage } from '../hooks/useStorage.js'
 import { daysSince, daysUntilDue, REMINDER_TYPES } from '../utils/reminders.js'
 import { getZoneDetails } from '../data/zones.js'
 import BottomNav from '../components/BottomNav.jsx'
+import AddLocationSheet, { LOCATION_CATEGORIES } from '../components/AddLocationSheet.jsx'
+
+function categoryLabel(id) {
+  return LOCATION_CATEGORIES.find(c => c.id === id)?.label ?? id
+}
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -190,12 +195,14 @@ function MeterBar({ icon, label, pct, color, status }) {
 export default function CareTips() {
   const navigate           = useNavigate()
   const { plantId }        = useParams()
-  const { getPlants, getUser, waterPlant, deletePlant, updatePlant, markReminder } = useStorage()
+  const { getPlants, getUser, waterPlant, deletePlant, updatePlant, markReminder, getLocations, addLocation } = useStorage()
 
-  const plants     = getPlants()
-  const user       = getUser()
-  const plant      = plants.find(p => p.id === plantId)
-  const zoneDetail = user?.zone ? getZoneDetails(user.zone) : null
+  const plants        = getPlants()
+  const user          = getUser()
+  const plant         = plants.find(p => p.id === plantId)
+  const zoneDetail    = user?.zone ? getZoneDetails(user.zone) : null
+  const locations     = getLocations()
+  const plantLocation = plant?.locationId ? locations.find(l => l.id === plant.locationId) : null
 
   // Redirect if plant not found
   useEffect(() => {
@@ -207,15 +214,17 @@ export default function CareTips() {
   // ─── Local state ─────────────────────────────────────────────────────────
 
   const [, setTick]                                = useState(0)  // bump to re-read getPlants() after waterPlant
-  const [justWatered,       setJustWatered]       = useState(false)
-  const [tips,              setTips]              = useState(null)
-  const [tipsLoading,       setTipsLoading]       = useState(true)
-  const [tipsError,         setTipsError]         = useState(null)
-  const [showMenu,          setShowMenu]          = useState(false)
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
-  const [expandedDiagnosis, setExpandedDiagnosis] = useState(null)
-  const [expandedReminder,  setExpandedReminder]  = useState(null)
-  const [flashedReminder,   setFlashedReminder]   = useState(null)
+  const [justWatered,        setJustWatered]        = useState(false)
+  const [tips,               setTips]               = useState(null)
+  const [tipsLoading,        setTipsLoading]        = useState(true)
+  const [tipsError,          setTipsError]          = useState(null)
+  const [showMenu,           setShowMenu]           = useState(false)
+  const [showDeleteConfirm,  setShowDeleteConfirm]  = useState(false)
+  const [expandedDiagnosis,  setExpandedDiagnosis]  = useState(null)
+  const [expandedReminder,   setExpandedReminder]   = useState(null)
+  const [flashedReminder,    setFlashedReminder]    = useState(null)
+  const [locationPickerOpen, setLocationPickerOpen] = useState(false)
+  const [addLocationOpen,    setAddLocationOpen]    = useState(false)
 
   const watering      = plant.reminders?.watering
   const frequencyDays = watering?.frequencyDays
@@ -511,6 +520,64 @@ Give care tips in this exact JSON format only:
           )}
         </div>
       </div>
+
+      {/* ── Location row ──────────────────────────────────────────────────── */}
+      {plantLocation ? (
+        <div style={{
+          display:    'flex',
+          alignItems: 'center',
+          margin:     '0 16px 16px',
+        }}>
+          <span style={{
+            display:      'inline-flex',
+            alignItems:   'center',
+            gap:          '6px',
+            padding:      '5px 14px',
+            background:   'var(--green-light)',
+            color:        'var(--green-dark)',
+            borderRadius: '100px',
+            fontSize:     '12px',
+            fontWeight:   500,
+          }}>
+            {plantLocation.icon} {plantLocation.name}
+          </span>
+          <button
+            onClick={() => setLocationPickerOpen(true)}
+            style={{
+              background: 'none',
+              border:     'none',
+              fontSize:   '12px',
+              color:      'var(--muted)',
+              marginLeft: '8px',
+              cursor:     'pointer',
+              padding:    0,
+              fontFamily: 'var(--font-body)',
+            }}
+          >
+            Change
+          </button>
+        </div>
+      ) : (
+        <button
+          onClick={() => setLocationPickerOpen(true)}
+          style={{
+            background:   'transparent',
+            border:       '1.5px dashed var(--green)',
+            color:        'var(--green)',
+            borderRadius: 'var(--radius)',
+            padding:      '10px 16px',
+            fontSize:     '14px',
+            fontWeight:   500,
+            width:        'calc(100% - 32px)',
+            margin:       '0 16px 16px',
+            cursor:       'pointer',
+            fontFamily:   'var(--font-body)',
+            display:      'block',
+          }}
+        >
+          📍 Add Location
+        </button>
+      )}
 
       {/* ── Plant Info ──────────────────────────────────────────────────────── */}
       {hasSetupInfo && (
@@ -1076,6 +1143,253 @@ Give care tips in this exact JSON format only:
             </div>
           </div>
         </div>
+      )}
+
+      {/* ── Location Picker bottom sheet ────────────────────────────────────── */}
+      {locationPickerOpen && (() => {
+        const bestCategories = plant.locationRecommendation?.bestCategories ?? []
+        const recommended = bestCategories.length > 0
+          ? locations.filter(l => bestCategories.includes(categoryLabel(l.category)))
+          : []
+        const recommendedIds = new Set(recommended.map(l => l.id))
+        const others         = locations.filter(l => !recommendedIds.has(l.id))
+        const showLabels     = recommended.length > 0 && others.length > 0
+
+        const renderRow = (loc) => {
+          const isRecommended = recommendedIds.has(loc.id)
+          const isCurrent     = plant.locationId === loc.id
+          return (
+            <div
+              key={loc.id}
+              onClick={() => {
+                updatePlant(plant.id, { locationId: loc.id })
+                setLocationPickerOpen(false)
+                setTick(t => t + 1)
+              }}
+              style={{
+                display:      'flex',
+                alignItems:   'center',
+                padding:      '12px 16px',
+                background:   '#fff',
+                borderRadius: '12px',
+                margin:       '0 16px 6px',
+                cursor:       'pointer',
+              }}
+            >
+              <span style={{ fontSize: '22px', marginRight: '10px', flexShrink: 0, lineHeight: 1 }}>
+                {loc.icon}
+              </span>
+              <span style={{
+                flex:       1,
+                fontSize:   '14px',
+                color:      'var(--text)',
+                fontWeight: 500,
+              }}>
+                {loc.name}
+              </span>
+              {isRecommended && !isCurrent && (
+                <span style={{ fontSize: '14px', flexShrink: 0 }}>✨</span>
+              )}
+              {isCurrent && (
+                <span style={{
+                  fontSize:     '10px',
+                  color:        'var(--muted)',
+                  background:   'var(--border)',
+                  borderRadius: '10px',
+                  padding:      '2px 6px',
+                  flexShrink:   0,
+                }}>
+                  Current
+                </span>
+              )}
+            </div>
+          )
+        }
+
+        const groupLabelStyle = (color) => ({
+          fontSize:      '11px',
+          fontWeight:    600,
+          color,
+          padding:       '4px 16px',
+          margin:        0,
+          textTransform: 'uppercase',
+          letterSpacing: '0.5px',
+        })
+
+        return (
+          <>
+            <div
+              onClick={() => setLocationPickerOpen(false)}
+              style={{
+                position:   'fixed',
+                inset:      0,
+                background: 'rgba(0,0,0,0.4)',
+                zIndex:     200,
+              }}
+            />
+            <div style={{
+              position:      'fixed',
+              bottom:        0,
+              left:          0,
+              right:         0,
+              background:    'var(--cream)',
+              borderRadius:  '20px 20px 0 0',
+              maxHeight:     '85vh',
+              overflowY:     'auto',
+              zIndex:        201,
+              paddingBottom: '32px',
+            }}>
+              {/* Drag handle */}
+              <div style={{
+                display:      'block',
+                width:        '36px',
+                height:       '4px',
+                borderRadius: '2px',
+                background:   'var(--border)',
+                margin:       '12px auto 8px',
+              }} />
+
+              {/* Title */}
+              <h2 style={{
+                fontFamily: 'var(--font-display)',
+                fontWeight: 500,
+                fontSize:   '20px',
+                margin:     0,
+                padding:    '0 16px 12px',
+                color:      'var(--text)',
+              }}>
+                Choose Location
+              </h2>
+
+              {/* Recommendation banner */}
+              <div style={{
+                background:   'rgba(29,158,117,0.08)',
+                border:       '1px solid rgba(29,158,117,0.2)',
+                borderRadius: '12px',
+                padding:      '12px 14px',
+                margin:       '0 16px 12px',
+              }}>
+                {bestCategories.length > 0 ? (
+                  <>
+                    <p style={{
+                      fontSize:   '12px',
+                      fontWeight: 600,
+                      color:      'var(--green)',
+                      margin:     0,
+                    }}>
+                      🌿 Best for {plant.name}:
+                    </p>
+                    <div style={{
+                      display:  'flex',
+                      flexWrap: 'wrap',
+                      gap:      '6px',
+                      margin:   '6px 0 0',
+                    }}>
+                      {bestCategories.map(cat => (
+                        <span key={cat} style={{
+                          background:   'rgba(29,158,117,0.1)',
+                          color:        'var(--green)',
+                          borderRadius: '20px',
+                          padding:      '4px 10px',
+                          fontSize:     '12px',
+                          fontWeight:   500,
+                        }}>
+                          {cat}
+                        </span>
+                      ))}
+                    </div>
+                    {plant.locationRecommendation?.reason && (
+                      <p style={{
+                        fontSize: '12px',
+                        color:    'var(--muted)',
+                        margin:   '4px 0 0',
+                        lineHeight: 1.5,
+                      }}>
+                        {plant.locationRecommendation.reason}
+                      </p>
+                    )}
+                  </>
+                ) : (
+                  <p style={{
+                    fontSize: '12px',
+                    color:    'var(--muted)',
+                    margin:   0,
+                    lineHeight: 1.5,
+                  }}>
+                    🌿 Tip: Match your plant's light and humidity needs to the right spot
+                  </p>
+                )}
+              </div>
+
+              {/* Location list */}
+              {showLabels && <p style={groupLabelStyle('var(--green)')}>✨ Recommended</p>}
+              {recommended.map(renderRow)}
+              {showLabels && <p style={groupLabelStyle('var(--muted)')}>Other Locations</p>}
+              {others.map(renderRow)}
+
+              {/* Create new location */}
+              <button
+                onClick={() => {
+                  setLocationPickerOpen(false)
+                  setAddLocationOpen(true)
+                }}
+                style={{
+                  display:      'block',
+                  width:        'calc(100% - 32px)',
+                  background:   'transparent',
+                  border:       '1.5px dashed var(--border)',
+                  color:        'var(--text)',
+                  borderRadius: 'var(--radius)',
+                  padding:      '12px 16px',
+                  fontSize:     '14px',
+                  margin:       '8px 16px 0',
+                  cursor:       'pointer',
+                  fontFamily:   'var(--font-body)',
+                }}
+              >
+                + Create new location
+              </button>
+
+              {/* Remove location */}
+              {plant.locationId && (
+                <button
+                  onClick={() => {
+                    updatePlant(plant.id, { locationId: undefined })
+                    setLocationPickerOpen(false)
+                    setTick(t => t + 1)
+                  }}
+                  style={{
+                    display:    'block',
+                    width:      '100%',
+                    background: 'none',
+                    border:     'none',
+                    fontSize:   '13px',
+                    color:      'var(--muted)',
+                    textAlign:  'center',
+                    padding:    '12px',
+                    cursor:     'pointer',
+                    fontFamily: 'var(--font-body)',
+                  }}
+                >
+                  Remove location
+                </button>
+              )}
+            </div>
+          </>
+        )
+      })()}
+
+      {/* ── Add Location sheet (from picker) ───────────────────────────────── */}
+      {addLocationOpen && (
+        <AddLocationSheet
+          onClose={() => setAddLocationOpen(false)}
+          onSave={data => {
+            const newLoc = addLocation(data)
+            updatePlant(plant.id, { locationId: newLoc.id })
+            setAddLocationOpen(false)
+            setTick(t => t + 1)
+          }}
+        />
       )}
 
       <BottomNav />

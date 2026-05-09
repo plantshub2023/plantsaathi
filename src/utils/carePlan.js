@@ -47,6 +47,11 @@ Required schema:
     "temperature": "18–28°C, avoid below 10°C",
     "humidity":    "Moderate, 40–60%",
     "fertilizer":  "Balanced NPK (10-10-10), once a month during growing season"
+  },
+  "locationRecommendation": {
+    "bestCategories":   ["Balcony", "Outdoor / On Ground"],
+    "reason":           "Needs 6+ hours direct sunlight daily to thrive",
+    "warningIfIndoor":  "May struggle without sufficient light in Living Room or Bedroom"
   }
 }
 
@@ -55,7 +60,11 @@ Rules:
 - frequencyDays must be an integer within: watering 1–14, misting 1–7, fertilizing 7–90, rotating 7–30, pruning 30–180, repotting 90–730.
 - Each reasoning: 1 sentence, ≤120 chars, mention the zone/season/plant trait that drives the value.
 - Each setupInfo value: ≤80 chars, plain language, no jargon.
-- fertilizer: 1 sentence max 100 chars — fertilizer type, NPK ratio if relevant, and frequency. Plain language, no jargon.`
+- fertilizer: 1 sentence max 100 chars — fertilizer type, NPK ratio if relevant, and frequency. Plain language, no jargon.
+- bestCategories must be one or more of these exact strings only: Living Room, Bedroom, Balcony, Potted Outdoor, Outdoor / On Ground, Office
+- reason: 1 sentence, max 100 chars, explaining why those locations suit this plant considering its light, humidity and temperature needs
+- warningIfIndoor: 1 sentence, max 120 chars, what happens if placed in a poor-match location. Use empty string if the plant adapts well to most locations.
+- Consider the plant's light requirements, humidity tolerance, temperature sensitivity, and the Indian climate zone provided.`
 }
 
 // ─── Validation helpers ───────────────────────────────────────────────────────
@@ -150,5 +159,20 @@ export async function generateCarePlan({ plantName, category, zone, zoneName, ci
     fertilizer:  typeof rawSetup.fertilizer  === 'string' ? rawSetup.fertilizer.slice(0, 120)  : '',
   }
 
-  return { reminders, setupInfo }
+  // ── Validate locationRecommendation ───────────────────────────────────────
+  const VALID_LOCATION_CATEGORIES = [
+    'Living Room', 'Bedroom', 'Balcony',
+    'Potted Outdoor', 'Outdoor / On Ground', 'Office',
+  ]
+  const rawLoc = parsed.locationRecommendation ?? {}
+  const bestCategories = Array.isArray(rawLoc.bestCategories)
+    ? rawLoc.bestCategories.filter(c => typeof c === 'string' && VALID_LOCATION_CATEGORIES.includes(c))
+    : []
+  const locationRecommendation = {
+    bestCategories,
+    reason:          typeof rawLoc.reason          === 'string' ? rawLoc.reason.slice(0, 120)          : '',
+    warningIfIndoor: typeof rawLoc.warningIfIndoor === 'string' ? rawLoc.warningIfIndoor.slice(0, 150) : '',
+  }
+
+  return { reminders, setupInfo, locationRecommendation }
 }
