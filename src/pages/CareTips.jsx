@@ -27,6 +27,14 @@ const TIP_CARDS = [
   { key: 'commonProblems', icon: '⚠️', label: 'Watch out for'     },
 ]
 
+const INFO_ROWS = [
+  { field: 'soil',        icon: '🌱',  label: 'Soil'        },
+  { field: 'sunlight',    icon: '☀️',  label: 'Sunlight'    },
+  { field: 'temperature', icon: '🌡️', label: 'Temperature' },
+  { field: 'humidity',    icon: '💧',  label: 'Humidity'    },
+  { field: 'fertilizer',  icon: '🌿',  label: 'Fertilizer'  },
+]
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function formatDate(iso) {
@@ -214,6 +222,17 @@ export default function CareTips() {
   const daysAgo       = watering?.lastCompleted ? daysSince(watering.lastCompleted) : null
   const status        = healthStatus(daysAgo, frequencyDays)
   const diagnoses     = (plant.diagnoses || [])
+
+  const hasSetupInfo = plant.setupInfo && (
+    plant.setupInfo.soil ||
+    plant.setupInfo.sunlight ||
+    plant.setupInfo.temperature ||
+    plant.setupInfo.humidity ||
+    plant.setupInfo.fertilizer
+  )
+  const setupRows = hasSetupInfo
+    ? INFO_ROWS.filter(({ field }) => !!plant.setupInfo[field])
+    : []
 
   // ─── Plant health meters ────────────────────────────────────────────────────
   const waterMeter = reminderMeter(plant.reminders?.watering,    { good: 'Good', soon: 'Water Soon',     overdue: 'Needs Water'       })
@@ -492,6 +511,68 @@ Give care tips in this exact JSON format only:
           )}
         </div>
       </div>
+
+      {/* ── Plant Info ──────────────────────────────────────────────────────── */}
+      {hasSetupInfo && (
+        <div style={{
+          background:   '#fff',
+          border:       '1.5px solid var(--border)',
+          borderRadius: 'var(--radius)',
+          padding:      '16px',
+          margin:       '0 16px 16px',
+        }}>
+          <p style={{
+            fontFamily:  'var(--font-display)',
+            fontWeight:  500,
+            fontSize:    '16px',
+            color:       'var(--text)',
+            margin:      '0 0 12px',
+          }}>
+            🌿 Plant Care Guide
+          </p>
+
+          {setupRows.map(({ field, icon, label }, idx) => (
+            <div
+              key={field}
+              style={{
+                display:      'flex',
+                alignItems:   'flex-start',
+                gap:          '10px',
+                padding:      '8px 0',
+                borderBottom: idx < setupRows.length - 1 ? '1px solid var(--border)' : 'none',
+              }}
+            >
+              <div style={{
+                display:       'flex',
+                flexDirection: 'column',
+                alignItems:    'center',
+                width:         '90px',
+                flexShrink:    0,
+              }}>
+                <span style={{ fontSize: '20px', lineHeight: 1, marginBottom: '4px' }}>{icon}</span>
+                <span style={{
+                  fontSize:      '11px',
+                  fontWeight:    600,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px',
+                  color:         'var(--muted)',
+                }}>
+                  {label}
+                </span>
+              </div>
+              <span style={{
+                flex:       1,
+                fontSize:   '14px',
+                color:      'var(--text)',
+                lineHeight: 1.5,
+                paddingTop: '2px',
+              }}>
+                {plant.setupInfo[field]}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* ── Watering section ───────────────────────────────────────────────── */}
       <div style={card({ padding: '20px' })}>

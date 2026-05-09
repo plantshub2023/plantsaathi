@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Droplet, SprayCan, Sprout, RotateCw, Scissors, Flower2, Check } from 'lucide-react'
 import { useStorage } from '../hooks/useStorage.js'
-import { daysSince, isReminderDue, getDueReminders, REMINDER_TYPES } from '../utils/reminders.js'
+import { daysSince, getDueReminders, REMINDER_TYPES } from '../utils/reminders.js'
 import BottomNav from '../components/BottomNav.jsx'
 import CareCalendar from '../components/CareCalendar.jsx'
 import AddLocationSheet from '../components/AddLocationSheet.jsx'
@@ -87,6 +87,7 @@ export default function Garden() {
   const [calendarOpen, setCalendarOpen] = useState(false)
   const [weather, setWeather]           = useState(null)
   const [addSheetOpen, setAddSheetOpen] = useState(false)
+  const [tasksSheetOpen, setTasksSheetOpen] = useState(false)
 
   const user   = getUser()
   const plants = getPlants()
@@ -118,6 +119,11 @@ export default function Garden() {
     }
   }
 
+  function handleTaskDone(plantId, type) {
+    markReminder(plantId, type)
+    setTick(t => t + 1)
+  }
+
   function handleMarkPill(plantId, type, e) {
     e.stopPropagation()
     const key = `${plantId}:${type}`
@@ -132,7 +138,7 @@ export default function Garden() {
   if (!user) return null
 
   const month      = new Date().getMonth()
-  const needsWater = plants.filter(p => isReminderDue(p.reminders?.watering)).length
+  const tasksCount = plants.reduce((sum, p) => sum + getDueReminders(p).length, 0)
   const refDate = user.joinedDate
     || plants.reduce((earliest, p) => {
         if (!p.addedDate) return earliest
@@ -242,10 +248,11 @@ export default function Garden() {
       }}>
         {[
           {
-            emoji: '💧',
-            value: needsWater,
-            label: needsWater === 1 ? 'needs water' : 'need water',
-            alert: needsWater > 0,
+            emoji:   '🔔',
+            value:   tasksCount,
+            label:   'tasks today',
+            alert:   tasksCount > 0,
+            onClick: () => setTasksSheetOpen(true),
           },
           {
             emoji: '🌱',
@@ -725,6 +732,163 @@ export default function Garden() {
             navigate(`/location/${loc.id}`)
           }}
         />
+      )}
+
+      {/* ── Tasks Today sheet ─────────────────────────────────────────────── */}
+      {tasksSheetOpen && (
+        <>
+          {/* Backdrop */}
+          <div
+            onClick={() => setTasksSheetOpen(false)}
+            style={{
+              position:   'fixed',
+              inset:      0,
+              background: 'rgba(0,0,0,0.4)',
+              zIndex:     200,
+            }}
+          />
+
+          {/* Sheet panel */}
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              position:      'fixed',
+              bottom:        0,
+              left:          0,
+              right:         0,
+              background:    'var(--cream)',
+              borderRadius:  '20px 20px 0 0',
+              maxHeight:     '80vh',
+              overflowY:     'auto',
+              zIndex:        201,
+              paddingBottom: '32px',
+            }}
+          >
+            {/* Drag handle */}
+            <div style={{
+              width:        '36px',
+              height:       '4px',
+              borderRadius: '2px',
+              background:   'var(--border)',
+              margin:       '12px auto 0',
+            }} />
+
+            {/* Header */}
+            <h2 style={{
+              fontFamily: 'var(--font-display)',
+              fontWeight: 500,
+              fontSize:   '20px',
+              margin:     0,
+              padding:    '16px 16px 0',
+              color:      'var(--text)',
+            }}>
+              Today's Tasks
+            </h2>
+
+            {tasksCount === 0 ? (
+
+              /* ── All caught up ──────────────────────────────────────────── */
+              <div style={{ textAlign: 'center', padding: '48px 24px' }}>
+                <div style={{ fontSize: '40px', marginBottom: '12px', lineHeight: 1 }}>🌿</div>
+                <p style={{ fontSize: '16px', fontWeight: 500, color: 'var(--text)', margin: '0 0 6px' }}>
+                  All caught up!
+                </p>
+                <p style={{ fontSize: '13px', color: 'var(--muted)', margin: 0 }}>
+                  No reminders due today
+                </p>
+              </div>
+
+            ) : (
+
+              /* ── Task list ──────────────────────────────────────────────── */
+              <>
+                <p style={{ fontSize: '13px', color: 'var(--muted)', margin: '4px 16px 12px' }}>
+                  {tasksCount} reminder{tasksCount !== 1 ? 's' : ''} due across your garden
+                </p>
+
+                {plants.map(plant => {
+                  const dueTypes = getDueReminders(plant)
+                  if (dueTypes.length === 0) return null
+                  return (
+                    <div key={plant.id}>
+
+                      {/* Plant section header */}
+                      <div style={{
+                        display:    'flex',
+                        alignItems: 'center',
+                        gap:        '8px',
+                        padding:    '12px 16px 4px',
+                      }}>
+                        {plant.photo ? (
+                          <img
+                            src={plant.photo}
+                            alt={plant.name}
+                            style={{
+                              width:        '28px',
+                              height:       '28px',
+                              borderRadius: '8px',
+                              objectFit:    'cover',
+                              flexShrink:   0,
+                            }}
+                          />
+                        ) : (
+                          <span style={{ fontSize: '20px', lineHeight: 1 }}>
+                            {plant.emoji || '🌿'}
+                          </span>
+                        )}
+                        <span style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text)' }}>
+                          {plant.name}
+                        </span>
+                      </div>
+
+                      {/* Task rows */}
+                      {dueTypes.map(type => {
+                        const meta = REMINDER_TYPES[type]
+                        return (
+                          <div
+                            key={type}
+                            style={{
+                              display:        'flex',
+                              alignItems:     'center',
+                              justifyContent: 'space-between',
+                              padding:        '8px 16px',
+                              background:     '#fff',
+                              borderRadius:   '12px',
+                              margin:         '0 16px 6px',
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <span style={{ fontSize: '20px', lineHeight: 1 }}>{meta.icon}</span>
+                              <span style={{ fontSize: '14px', color: 'var(--text)' }}>
+                                {meta.label}
+                              </span>
+                            </div>
+                            <button
+                              onClick={() => handleTaskDone(plant.id, type)}
+                              style={{
+                                padding:      '6px 14px',
+                                background:   'var(--green)',
+                                color:        '#fff',
+                                borderRadius: '20px',
+                                fontSize:     '13px',
+                                fontWeight:   500,
+                                fontFamily:   'var(--font-body)',
+                                border:       'none',
+                                cursor:       'pointer',
+                              }}
+                            >
+                              Done ✓
+                            </button>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )
+                })}
+              </>
+            )}
+          </div>
+        </>
       )}
     </div>
   )
