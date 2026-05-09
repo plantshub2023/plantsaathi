@@ -18,6 +18,7 @@ const REMINDER_ICONS = {
 }
 
 const EMPTY_SETUP_INFO = { soil: '', sunlight: '', temperature: '', humidity: '' }
+const EMPTY_LOCATION_REC = { bestCategories: [], reason: '', warningIfIndoor: '' }
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -26,10 +27,12 @@ export default function RecommendedPlan() {
   const navigate    = useNavigate()
   const { getPlants, getUser, updatePlant } = useStorage()
 
-  const [mode,         setMode]         = useState('loading') // loading | editing | saving | error
-  const [errorMessage, setErrorMessage] = useState('')
-  const [reminders,    setReminders]    = useState({})
-  const setupInfoRef                   = useRef(EMPTY_SETUP_INFO)
+  const [mode,                   setMode]                   = useState('loading') // loading | editing | saving | error
+  const [errorMessage,           setErrorMessage]           = useState('')
+  const [reminders,              setReminders]              = useState({})
+  const [locationRecommendation, setLocationRecommendation] = useState(EMPTY_LOCATION_REC)
+  const setupInfoRef              = useRef(EMPTY_SETUP_INFO)
+  const locationRecommendationRef = useRef(EMPTY_LOCATION_REC)
 
   // Read fresh from storage each render so we get the latest plant data
   const plants = getPlants()
@@ -56,6 +59,9 @@ export default function RecommendedPlan() {
       })
       setReminders(result.reminders)
       setupInfoRef.current = result.setupInfo ?? EMPTY_SETUP_INFO
+      const loc = result.locationRecommendation ?? EMPTY_LOCATION_REC
+      setLocationRecommendation(loc)
+      locationRecommendationRef.current = loc
       setMode('editing')
     } catch (err) {
       setErrorMessage(err.message ?? 'Could not generate care plan. Please try again.')
@@ -92,7 +98,11 @@ export default function RecommendedPlan() {
         lastCompleted: null,
       }
     }
-    updatePlant(plantId, { reminders: newReminders, setupInfo: setupInfoRef.current })
+    updatePlant(plantId, {
+      reminders:              newReminders,
+      setupInfo:              setupInfoRef.current,
+      locationRecommendation: locationRecommendationRef.current,
+    })
     navigate('/garden')
   }
 
@@ -384,6 +394,80 @@ export default function RecommendedPlan() {
           </div>
         )
       })}
+
+      {/* ── Best Location card ────────────────────────────────────────────── */}
+      <div style={{
+        background:   '#fff',
+        border:       '1.5px solid var(--border)',
+        borderRadius: '14px',
+        padding:      '16px',
+        margin:       '0 16px 12px',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <span style={{ fontSize: '22px', lineHeight: 1, flexShrink: 0 }}>📍</span>
+          <span style={{
+            fontSize:   '15px',
+            fontWeight: 500,
+            color:      'var(--text)',
+            fontFamily: 'var(--font-body)',
+          }}>
+            Best Location
+          </span>
+        </div>
+
+        {locationRecommendation.bestCategories.length > 0 ? (
+          <>
+            <div style={{
+              display:  'flex',
+              flexWrap: 'wrap',
+              gap:      '6px',
+              margin:   '8px 0 4px',
+            }}>
+              {locationRecommendation.bestCategories.map(cat => (
+                <span key={cat} style={{
+                  background:   'rgba(29,158,117,0.1)',
+                  color:        'var(--green)',
+                  borderRadius: '20px',
+                  padding:      '4px 10px',
+                  fontSize:     '12px',
+                  fontWeight:   500,
+                }}>
+                  {cat}
+                </span>
+              ))}
+            </div>
+            {locationRecommendation.reason && (
+              <p style={{
+                fontSize:  '13px',
+                fontStyle: 'italic',
+                color:     'var(--muted)',
+                margin:    '4px 0 0',
+                lineHeight: 1.5,
+              }}>
+                {locationRecommendation.reason}
+              </p>
+            )}
+            {locationRecommendation.warningIfIndoor && (
+              <p style={{
+                fontSize:   '12px',
+                color:      '#E07B39',
+                margin:     '6px 0 0',
+                lineHeight: 1.5,
+              }}>
+                ⚠️ {locationRecommendation.warningIfIndoor}
+              </p>
+            )}
+          </>
+        ) : (
+          <p style={{
+            fontSize: '13px',
+            color:    'var(--muted)',
+            margin:   '8px 0 0',
+          }}>
+            🌿 Adaptable to most locations
+          </p>
+        )}
+      </div>
 
       {/* ── Sticky bottom bar ─────────────────────────────────────────────── */}
       <div style={{

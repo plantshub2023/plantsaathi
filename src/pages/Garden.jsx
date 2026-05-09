@@ -5,7 +5,11 @@ import { useStorage } from '../hooks/useStorage.js'
 import { daysSince, getDueReminders, REMINDER_TYPES } from '../utils/reminders.js'
 import BottomNav from '../components/BottomNav.jsx'
 import CareCalendar from '../components/CareCalendar.jsx'
-import AddLocationSheet from '../components/AddLocationSheet.jsx'
+import AddLocationSheet, { LOCATION_CATEGORIES } from '../components/AddLocationSheet.jsx'
+
+function categoryLabel(id) {
+  return LOCATION_CATEGORIES.find(c => c.id === id)?.label ?? id
+}
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -563,6 +567,15 @@ export default function Garden() {
 
               const dueTypes = getDueReminders(plant)
 
+              const plantLocation   = plant.locationId ? locations.find(l => l.id === plant.locationId) : null
+              const isWrongLocation = !!(
+                plant.locationRecommendation &&
+                plant.locationRecommendation.bestCategories?.length > 0 &&
+                plantLocation &&
+                !plant.locationRecommendation.bestCategories.includes(categoryLabel(plantLocation.category)) &&
+                plant.locationRecommendation.warningIfIndoor
+              )
+
               return (
                 <div
                   key={plant.id}
@@ -611,7 +624,12 @@ export default function Garden() {
                       {plant.name}
                     </p>
                     {(plant.room || plant.locationId) && (
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginBottom: '5px' }}>
+                      <div style={{
+                        display:      'flex',
+                        flexWrap:     'wrap',
+                        gap:          '4px',
+                        marginBottom: '5px',
+                      }}>
                         {plant.locationId && (() => {
                           const loc = locations.find(l => l.id === plant.locationId)
                           return loc ? (
@@ -641,6 +659,19 @@ export default function Garden() {
                             {plant.room}
                           </span>
                         )}
+                      </div>
+                    )}
+                    {isWrongLocation && (
+                      <div style={{
+                        display:        'flex',
+                        alignItems:     'center',
+                        justifyContent: 'space-between',
+                        marginTop:      2,
+                      }}>
+                        <span style={{ fontSize: '10px', color: '#E07B39', fontWeight: 500 }}>
+                          Better in {plant.locationRecommendation.bestCategories[0]}
+                        </span>
+                        <span style={{ fontSize: '12px' }}>⚠️</span>
                       </div>
                     )}
                     <div style={{
