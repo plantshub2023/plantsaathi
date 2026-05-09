@@ -32,12 +32,21 @@ const TIP_CARDS = [
   { key: 'commonProblems', icon: '⚠️', label: 'Watch out for'     },
 ]
 
+const HumidityIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    {/* Water drop */}
+    <path d="M12 2C12 2 5 9.5 5 14a7 7 0 0 0 14 0c0-4.5-7-12-7-12z" fill="#4A90D9" opacity="0.85" />
+    {/* % inside */}
+    <text x="8.5" y="16" fontSize="7" fontWeight="bold" fill="white" fontFamily="sans-serif">%</text>
+  </svg>
+)
+
 const INFO_ROWS = [
-  { field: 'soil',        icon: '🌱',  label: 'Soil'        },
-  { field: 'sunlight',    icon: '☀️',  label: 'Sunlight'    },
-  { field: 'temperature', icon: '🌡️', label: 'Temperature' },
-  { field: 'humidity',    icon: '💧',  label: 'Humidity'    },
-  { field: 'fertilizer',  icon: '🌿',  label: 'Fertilizer'  },
+  { key: 'soil',        icon: '🌱',  label: 'Soil'                                   },
+  { key: 'sunlight',    icon: '☀️',  label: 'Sunlight'                               },
+  { key: 'temperature', icon: '🌡️', label: 'Temperature'                            },
+  { key: 'humidity',    icon: null,  label: 'Humidity', iconComponent: <HumidityIcon /> },
+  { key: 'fertilizer',  icon: '🌿',  label: 'Fertilizer'                             },
 ]
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -240,7 +249,7 @@ export default function CareTips() {
     plant.setupInfo.fertilizer
   )
   const setupRows = hasSetupInfo
-    ? INFO_ROWS.filter(({ field }) => !!plant.setupInfo[field])
+    ? INFO_ROWS.filter(({ key }) => !!plant.setupInfo[key])
     : []
 
   // ─── Plant health meters ────────────────────────────────────────────────────
@@ -598,9 +607,9 @@ Give care tips in this exact JSON format only:
             🌿 Plant Care Guide
           </p>
 
-          {setupRows.map(({ field, icon, label }, idx) => (
+          {setupRows.map(({ key, icon, label, iconComponent }, idx) => (
             <div
-              key={field}
+              key={key}
               style={{
                 display:      'flex',
                 alignItems:   'flex-start',
@@ -616,7 +625,16 @@ Give care tips in this exact JSON format only:
                 width:         '90px',
                 flexShrink:    0,
               }}>
-                <span style={{ fontSize: '20px', lineHeight: 1, marginBottom: '4px' }}>{icon}</span>
+                <span style={{
+                  fontSize:      '20px',
+                  lineHeight:    1,
+                  marginBottom:  '4px',
+                  display:       'inline-flex',
+                  alignItems:    'center',
+                  justifyContent: 'center',
+                }}>
+                  {iconComponent || icon}
+                </span>
                 <span style={{
                   fontSize:      '11px',
                   fontWeight:    600,
@@ -634,7 +652,7 @@ Give care tips in this exact JSON format only:
                 lineHeight: 1.5,
                 paddingTop: '2px',
               }}>
-                {plant.setupInfo[field]}
+                {plant.setupInfo[key]}
               </span>
             </div>
           ))}
@@ -1237,7 +1255,7 @@ Give care tips in this exact JSON format only:
               maxHeight:     '85vh',
               overflowY:     'auto',
               zIndex:        201,
-              paddingBottom: '32px',
+              paddingBottom: '100px',
             }}>
               {/* Drag handle */}
               <div style={{
@@ -1327,7 +1345,7 @@ Give care tips in this exact JSON format only:
               {showLabels && <p style={groupLabelStyle('var(--muted)')}>Other Locations</p>}
               {others.map(renderRow)}
 
-              {/* Create new location */}
+              {/* Create new location — always visible */}
               <button
                 onClick={() => {
                   setLocationPickerOpen(false)
@@ -1337,12 +1355,13 @@ Give care tips in this exact JSON format only:
                   display:      'block',
                   width:        'calc(100% - 32px)',
                   background:   'transparent',
-                  border:       '1.5px dashed var(--border)',
-                  color:        'var(--text)',
+                  border:       '1.5px dashed var(--green)',
+                  color:        'var(--green)',
                   borderRadius: 'var(--radius)',
-                  padding:      '12px 16px',
+                  padding:      '14px 16px',
                   fontSize:     '14px',
-                  margin:       '8px 16px 0',
+                  fontWeight:   500,
+                  margin:       '12px 16px 0',
                   cursor:       'pointer',
                   fontFamily:   'var(--font-body)',
                 }}
@@ -1367,6 +1386,7 @@ Give care tips in this exact JSON format only:
                     color:      'var(--muted)',
                     textAlign:  'center',
                     padding:    '12px',
+                    margin:     '4px 0 0',
                     cursor:     'pointer',
                     fontFamily: 'var(--font-body)',
                   }}

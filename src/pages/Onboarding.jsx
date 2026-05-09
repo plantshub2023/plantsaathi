@@ -1,11 +1,12 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { ZONES, getZone } from '../data/zones.js'
 import { PLANTS } from '../data/plants.js'
 import { useStorage } from '../hooks/useStorage.js'
 
 export default function Onboarding() {
-  const [step, setStep]                   = useState(1)
+  const location = useLocation()
+  const [step, setStep]                   = useState(location.state?.startStep ?? 1)
   const [name, setName]                   = useState('')
   const [citySearch, setCitySearch]       = useState('')
   const [city, setCity]                   = useState('')
