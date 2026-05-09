@@ -80,7 +80,7 @@ export default function AddPlant() {
   }
 
   function handleComplete() {
-    addPlant({
+    const newPlant = addPlant({
       name:  name.trim(),
       emoji,
       notes: notes.trim(),
@@ -88,7 +88,7 @@ export default function AddPlant() {
       waterDays,
       category,
     })
-    navigate('/garden')
+    navigate(`/recommended-plan/${newPlant.id}`)
   }
 
   const today = new Date().toLocaleDateString('en-IN', {

@@ -7,6 +7,7 @@ import CareTips from './pages/CareTips'
 import Profile from './pages/Profile'
 import PlantIdentifier from './pages/PlantIdentifier'
 import LocationDetail from './pages/LocationDetail'
+import RecommendedPlan from './pages/RecommendedPlan'
 
 function RequireUser({ children }) {
   const user = localStorage.getItem('user')
@@ -50,6 +51,10 @@ export default function App() {
           <Route
             path="/location/:id"
             element={<RequireUser><LocationDetail /></RequireUser>}
+          />
+          <Route
+            path="/recommended-plan/:plantId"
+            element={<RequireUser><RecommendedPlan /></RequireUser>}
           />
           <Route
             path="*"
