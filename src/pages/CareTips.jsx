@@ -6,6 +6,11 @@ import { daysSince, daysUntilDue, REMINDER_TYPES } from '../utils/reminders.js'
 import { getZoneDetails } from '../data/zones.js'
 import BottomNav from '../components/BottomNav.jsx'
 import AddLocationSheet, { LOCATION_CATEGORIES } from '../components/AddLocationSheet.jsx'
+import SoilMixChart from '../components/SoilMixChart.jsx'
+import FertilizerSchedule from '../components/FertilizerSchedule.jsx'
+import HealthScoreDonut from '../components/HealthScoreDonut.jsx'
+import { calculateHealthScore, getWeakestFactor } from '../utils/healthScore.js'
+import { buildConditionPrompt, validateConditionFertilizer } from '../utils/conditionFertilizer.js'
 
 function categoryLabel(id) {
   return LOCATION_CATEGORIES.find(c => c.id === id)?.label ?? id
@@ -235,6 +240,14 @@ export default function CareTips() {
   const [locationPickerOpen, setLocationPickerOpen] = useState(false)
   const [addLocationOpen,    setAddLocationOpen]    = useState(false)
 
+  // Condition-based ("treatment plan") fertilizer state — only fetched when
+  // the plant's health score drops below 50.
+  const [conditionFert,       setConditionFert]       = useState(null)
+  const [conditionFertLoading, setConditionFertLoading] = useState(false)
+  // Tracks whether we've already kicked off a fetch for this mount, so the
+  // effect doesn't fire twice during React StrictMode's double-invoke in dev.
+  const conditionFetchInFlight = useRef(false)
+
   const watering      = plant.reminders?.watering
   const frequencyDays = watering?.frequencyDays
   const daysAgo       = watering?.lastCompleted ? daysSince(watering.lastCompleted) : null
@@ -284,7 +297,7 @@ export default function CareTips() {
           system:     'You are an expert Indian horticulturist. Give specific advice for Indian conditions only.',
           messages: [{
             role: 'user',
-            content: `Plant: ${plant.name}
+            content: `Plant: ${plant.name}${plant.category ? `\nCategory: ${plant.category}` : ''}
 City: ${user?.city ?? 'India'}, Zone: ${user?.zone ?? 'Z16'} - ${user?.zoneName ?? ''}
 Current month: ${currentMonth}
 
@@ -309,6 +322,107 @@ Give care tips in this exact JSON format only:
       setTipsError(err.message ?? 'Could not load tips')
     } finally {
       setTipsLoading(false)
+    }
+  }
+
+  // ─── Condition-based fertilizer ──────────────────────────────────────────
+  // Trigger a fresh AI call when the plant's health score drops below 50
+  // and the cached condition fertilizer is missing or stale.
+  // Stale ⇔ no cache, no cached date, cached date older than 7 days, OR the
+  // current health score has moved by >10 points from the cached score.
+  const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000
+  const SCORE_DELTA   = 10
+
+  useEffect(() => {
+    if (!plant) return
+    const health = calculateHealthScore(plant)
+    if (health.score >= 50) {
+      // Healthy enough — make sure the in-memory state matches and bail.
+      setConditionFert(null)
+      setConditionFertLoading(false)
+      return
+    }
+
+    const cg          = plant.careGuide || {}
+    const cached      = cg.conditionFertilizer
+    const cachedAt    = cg.conditionFertilizerDate
+    const cachedScore = cg.conditionFertilizerScore
+
+    let stale = !cached || !cachedAt
+    if (!stale) {
+      const age = Date.now() - new Date(cachedAt).getTime()
+      if (age > SEVEN_DAYS_MS) stale = true
+      else if (typeof cachedScore !== 'number' ||
+               Math.abs(health.score - cachedScore) > SCORE_DELTA) stale = true
+    }
+
+    if (stale) {
+      if (!conditionFetchInFlight.current) fetchConditionFertilizer(health)
+    } else {
+      setConditionFert(cached)
+    }
+    // Re-run on plant change OR when the cached date is updated (after a
+    // successful fetch — closes the loop without polling).
+  }, [plantId, plant?.careGuide?.conditionFertilizerDate])
+
+  async function fetchConditionFertilizer(health) {
+    conditionFetchInFlight.current = true
+    setConditionFertLoading(true)
+    try {
+      const currentMonth = MONTHS[new Date().getMonth()]
+      const prompt = buildConditionPrompt({ plant, health, user, currentMonth })
+
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type':                              'application/json',
+          'x-api-key':                                 import.meta.env.VITE_ANTHROPIC_API_KEY,
+          'anthropic-version':                         '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true',
+        },
+        body: JSON.stringify({
+          model:      'claude-sonnet-4-20250514',
+          max_tokens: 1500,
+          messages:   [{ role: 'user', content: prompt }],
+        }),
+      })
+      if (!res.ok) throw new Error(`API error ${res.status}`)
+      const data    = await res.json()
+      const text    = (data.content?.[0]?.text ?? '').trim()
+      // Strip markdown fences if the AI wrapped the JSON anyway, then grab
+      // the first [...] blob.
+      const stripped = text
+        .replace(/^```(?:json)?\s*/i, '')
+        .replace(/\s*```\s*$/i, '')
+        .trim()
+      const match = stripped.match(/\[[\s\S]*\]/)
+      if (!match) throw new Error('Could not parse condition fertilizer JSON')
+      const parsed    = JSON.parse(match[0])
+      const validated = validateConditionFertilizer(parsed)
+      if (!validated) throw new Error('No valid condition fertilizer items')
+
+      setConditionFert(validated)
+
+      // Persist to plant — re-read latest careGuide so we don't stomp on
+      // soilMix/fertilizerSchedule that may have landed in a parallel write.
+      const fresh = getPlants().find(p => p.id === plant.id)
+      if (fresh) {
+        updatePlant(plant.id, {
+          careGuide: {
+            ...(fresh.careGuide || {}),
+            conditionFertilizer:      validated,
+            conditionFertilizerDate:  new Date().toISOString(),
+            conditionFertilizerScore: health.score,
+          },
+        })
+      }
+    } catch {
+      // Silent — null state in the schedule card lets the user retry via
+      // the "Regenerate Care Plan" button.
+      setConditionFert(null)
+    } finally {
+      setConditionFertLoading(false)
+      conditionFetchInFlight.current = false
     }
   }
 
@@ -530,6 +644,11 @@ Give care tips in this exact JSON format only:
         </div>
       </div>
 
+      {/* ── Health Score (donut + breakdown) ──────────────────────────────── */}
+      <div style={{ margin: '0 16px' }}>
+        <HealthScoreDonut plant={plant} compact={false} />
+      </div>
+
       {/* ── Location row ──────────────────────────────────────────────────── */}
       {plantLocation ? (
         <div style={{
@@ -658,6 +777,50 @@ Give care tips in this exact JSON format only:
           ))}
         </div>
       )}
+
+      {/* ── Soil Mix Recipe (donut chart) ───────────────────────────────────── */}
+      <div style={{ margin: '0 16px' }}>
+        <SoilMixChart soilMix={plant.careGuide?.soilMix ?? null} />
+      </div>
+
+      {/* ── Fertilizer Schedule ────────────────────────────────────────────── */}
+      {(() => {
+        const health      = calculateHealthScore(plant)
+        const isUnhealthy = health.score < 50
+        const weakest     = isUnhealthy ? getWeakestFactor(health) : null
+
+        return (
+          <div style={{ margin: '0 16px' }}>
+            {isUnhealthy && weakest && (
+              <div style={{
+                background:   '#FFF0F0',
+                borderLeft:   '3px solid #EF4444',
+                borderRadius: '8px',
+                padding:      '10px 14px',
+                marginBottom: '12px',
+                fontSize:     '13px',
+                color:        '#EF4444',
+                lineHeight:   1.5,
+                fontFamily:   'var(--font-body)',
+              }}>
+                🚨 {weakest.label} — showing treatment plan
+              </div>
+            )}
+
+            {isUnhealthy ? (
+              <FertilizerSchedule
+                fertilizerSchedule={conditionFert}
+                isConditionBased={true}
+                conditionLoading={conditionFertLoading}
+              />
+            ) : (
+              <FertilizerSchedule
+                fertilizerSchedule={plant.careGuide?.fertilizerSchedule ?? null}
+              />
+            )}
+          </div>
+        )
+      })()}
 
       {/* ── Watering section ───────────────────────────────────────────────── */}
       <div style={card({ padding: '20px' })}>

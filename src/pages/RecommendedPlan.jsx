@@ -33,6 +33,8 @@ export default function RecommendedPlan() {
   const [locationRecommendation, setLocationRecommendation] = useState(EMPTY_LOCATION_REC)
   const setupInfoRef              = useRef(EMPTY_SETUP_INFO)
   const locationRecommendationRef = useRef(EMPTY_LOCATION_REC)
+  const soilMixRef                = useRef(null)
+  const fertilizerScheduleRef     = useRef(null)
 
   // Read fresh from storage each render so we get the latest plant data
   const plants = getPlants()
@@ -62,6 +64,8 @@ export default function RecommendedPlan() {
       const loc = result.locationRecommendation ?? EMPTY_LOCATION_REC
       setLocationRecommendation(loc)
       locationRecommendationRef.current = loc
+      soilMixRef.current            = result.soilMix            ?? null
+      fertilizerScheduleRef.current = result.fertilizerSchedule ?? null
       setMode('editing')
     } catch (err) {
       setErrorMessage(err.message ?? 'Could not generate care plan. Please try again.')
@@ -102,6 +106,10 @@ export default function RecommendedPlan() {
       reminders:              newReminders,
       setupInfo:              setupInfoRef.current,
       locationRecommendation: locationRecommendationRef.current,
+      careGuide:              {
+        soilMix:            soilMixRef.current,
+        fertilizerSchedule: fertilizerScheduleRef.current,
+      },
     })
     navigate('/garden')
   }

@@ -11,15 +11,48 @@ import {
 // drop the legacy field. Idempotent — already-migrated plants pass through.
 
 function migratePlant(plant) {
-  if (plant.reminders) return { plant, changed: false }
+  let next    = plant
+  let changed = false
 
-  const reminders = getDefaultReminders(plant)
-  if (plant.lastWatered) {
-    reminders.watering.lastCompleted = toDateKey(plant.lastWatered)
+  // ── Migration 1: legacy lastWatered → reminders.watering.lastCompleted ────
+  if (!next.reminders) {
+    const reminders = getDefaultReminders(next)
+    if (next.lastWatered) {
+      reminders.watering.lastCompleted = toDateKey(next.lastWatered)
+    }
+    const { lastWatered, ...rest } = next
+    next    = { ...rest, reminders }
+    changed = true
   }
 
-  const { lastWatered, ...rest } = plant
-  return { plant: { ...rest, reminders }, changed: true }
+  // ── Migration 2: ensure careGuide fields are never undefined ──────────────
+  // If a plant has a careGuide block (from a Care Plan generated before a
+  // given field existed), pin missing fields to null so reads don't trip on
+  // undefined. Idempotent — once null, the check passes through.
+  if (next.careGuide) {
+    const cg    = next.careGuide
+    const needs = cg.soilMix                  === undefined
+               || cg.fertilizerSchedule       === undefined
+               || cg.conditionFertilizer      === undefined
+               || cg.conditionFertilizerDate  === undefined
+               || cg.conditionFertilizerScore === undefined
+    if (needs) {
+      next = {
+        ...next,
+        careGuide: {
+          ...cg,
+          soilMix:                  cg.soilMix                  === undefined ? null : cg.soilMix,
+          fertilizerSchedule:       cg.fertilizerSchedule       === undefined ? null : cg.fertilizerSchedule,
+          conditionFertilizer:      cg.conditionFertilizer      === undefined ? null : cg.conditionFertilizer,
+          conditionFertilizerDate:  cg.conditionFertilizerDate  === undefined ? null : cg.conditionFertilizerDate,
+          conditionFertilizerScore: cg.conditionFertilizerScore === undefined ? null : cg.conditionFertilizerScore,
+        },
+      }
+      changed = true
+    }
+  }
+
+  return { plant: next, changed }
 }
 
 function migratePlants(plants) {
