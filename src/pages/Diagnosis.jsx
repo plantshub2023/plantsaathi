@@ -97,7 +97,7 @@ export default function Diagnosis() {
       content.push({
         type: 'text',
         text: `You are an expert Indian horticulturist.
-Plant: ${plantName}
+Plant: ${plantName}${selectedPlant?.category ? `\nCategory: ${selectedPlant.category}` : ''}
 City: ${user?.city ?? 'India'}
 Zone: ${user?.zone ?? 'Z16'} - ${user?.zoneName ?? 'Subtropical'}
 Month: ${currentMonth}

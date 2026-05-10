@@ -6,6 +6,19 @@ import { daysSince, getDueReminders, REMINDER_TYPES } from '../utils/reminders.j
 import BottomNav from '../components/BottomNav.jsx'
 import CareCalendar from '../components/CareCalendar.jsx'
 import AddLocationSheet, { LOCATION_CATEGORIES } from '../components/AddLocationSheet.jsx'
+import { calculateHealthScore } from '../utils/healthScore.js'
+
+// Sub-text rendered below the status label on each Garden plant card,
+// keyed by the status enum returned from calculateHealthScore.
+const SCORE_SUBTEXT = {
+  thriving:     'Great health!',
+  'needs-care': 'Needs attention',
+  unhealthy:    'Needs treatment',
+}
+
+// Donut geometry — r=13 with stroke-width=5 fits inside a 36×36 SVG.
+// Circumference is computed once at module load.
+const DONUT_CIRCUMFERENCE = 2 * Math.PI * 13  // ≈ 81.68
 
 function categoryLabel(id) {
   return LOCATION_CATEGORIES.find(c => c.id === id)?.label ?? id
@@ -794,6 +807,91 @@ export default function Garden() {
                         flexShrink:   0,
                       }} />
                     </div>
+
+                    {/* Health score row — mini SVG donut + status label */}
+                    {(() => {
+                      const health = calculateHealthScore(plant)
+                      const score  = Math.max(0, Math.min(100, Math.round(health.score)))
+                      const filled = (score / 100) * DONUT_CIRCUMFERENCE
+                      const empty  = DONUT_CIRCUMFERENCE - filled
+                      return (
+                        <div style={{
+                          display:      'flex',
+                          alignItems:   'center',
+                          gap:          '8px',
+                          marginTop:    '8px',
+                          marginBottom: '4px',
+                        }}>
+                          {/* Mini donut */}
+                          <div style={{
+                            position:   'relative',
+                            width:      '36px',
+                            height:     '36px',
+                            flexShrink: 0,
+                          }}>
+                            <svg
+                              viewBox="0 0 36 36"
+                              width="36"
+                              height="36"
+                              style={{ transform: 'rotate(-90deg)', display: 'block' }}
+                            >
+                              {/* Track */}
+                              <circle
+                                cx="18" cy="18" r="13"
+                                fill="none"
+                                stroke="#E8F5F0"
+                                strokeWidth="5"
+                              />
+                              {/* Fill */}
+                              <circle
+                                cx="18" cy="18" r="13"
+                                fill="none"
+                                stroke={health.color}
+                                strokeWidth="5"
+                                strokeDasharray={`${filled} ${empty}`}
+                                strokeLinecap="round"
+                              />
+                            </svg>
+                            <div style={{
+                              position:   'absolute',
+                              top:        '50%',
+                              left:       '50%',
+                              transform:  'translate(-50%, -50%)',
+                              fontSize:   '10px',
+                              fontWeight: 600,
+                              color:      health.color,
+                              fontFamily: 'var(--font-body)',
+                              lineHeight: 1,
+                            }}>
+                              {score}
+                            </div>
+                          </div>
+
+                          {/* Status text */}
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', minWidth: 0 }}>
+                            <span style={{
+                              fontSize:   '11px',
+                              fontWeight: 500,
+                              color:      health.color,
+                              whiteSpace: 'nowrap',
+                              overflow:   'hidden',
+                              textOverflow: 'ellipsis',
+                            }}>
+                              {health.emoji} {health.label}
+                            </span>
+                            <span style={{
+                              fontSize:    '10px',
+                              color:       '#aaa',
+                              whiteSpace:  'nowrap',
+                              overflow:    'hidden',
+                              textOverflow: 'ellipsis',
+                            }}>
+                              {SCORE_SUBTEXT[health.status]}
+                            </span>
+                          </div>
+                        </div>
+                      )
+                    })()}
 
                     {/* Due reminders */}
                     {dueTypes.length > 0 && (
