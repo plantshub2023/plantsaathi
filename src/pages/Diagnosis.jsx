@@ -42,7 +42,7 @@ export default function Diagnosis() {
   const plants = getPlants()
   const user   = getUser()
 
-  const [selectedPlantId, setSelectedPlantId] = useState(plants[0]?.id ?? null)
+  const [selectedPlantId, setSelectedPlantId] = useState(null)
   const [photo,           setPhoto]           = useState(null)   // data URL
   const [symptoms,        setSymptoms]        = useState([])
   const [loading,         setLoading]         = useState(false)
@@ -115,13 +115,10 @@ Respond in this exact JSON format only, no other text:
 }`,
       })
 
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
+      const res = await fetch('https://plantsaathi.com/api/claude-proxy.php', {
         method: 'POST',
         headers: {
-          'Content-Type':                          'application/json',
-          'x-api-key':                             import.meta.env.VITE_ANTHROPIC_API_KEY,
-          'anthropic-version':                     '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true',
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           model:      'claude-sonnet-4-20250514',
@@ -226,59 +223,52 @@ Respond in this exact JSON format only, no other text:
         </h1>
       </div>
 
-      {/* ── Plant selector ─────────────────────────────────────────────────── */}
-      <div style={card({ padding: '16px 20px' })}>
-        <span style={labelStyle}>Select plant</span>
-
-        {plants.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '12px 0' }}>
-            <p style={{ color: 'var(--muted)', fontSize: '14px', margin: '0 0 14px' }}>
-              Add a plant first to diagnose it
-            </p>
-            <button
-              onClick={() => navigate('/add-plant')}
-              style={{ ...btnPrimary, width: 'auto', padding: '12px 28px', fontSize: '14px' }}
-            >
-              Add a plant
-            </button>
-          </div>
-        ) : (
-          <div style={{
-            display:    'flex',
-            gap:        '8px',
-            overflowX:  'auto',
-            paddingBottom: '2px',
-            msOverflowStyle: 'none',
-            scrollbarWidth:  'none',
+      {/* ── Plant selector (only when plants exist) ────────────────────────── */}
+      {plants.length > 0 && (
+        <div style={card({ padding: '16px 20px' })}>
+          <p style={{
+            fontSize:      '11px',
+            color:         '#aaa',
+            letterSpacing: '1px',
+            marginBottom:  '10px',
+            margin:        '0 0 10px',
+            textTransform: 'uppercase',
           }}>
+            SELECT PLANT
+          </p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
             {plants.map(p => {
               const active = p.id === selectedPlantId
               return (
                 <button
                   key={p.id}
-                  onClick={() => { setSelectedPlantId(p.id); setResult(null); setError(null) }}
+                  onClick={() => {
+                    setSelectedPlantId(active ? null : p.id)
+                    setResult(null)
+                    setError(null)
+                  }}
                   style={{
-                    flexShrink:   0,
-                    padding:      '8px 16px',
-                    borderRadius: '100px',
-                    border:       `1.5px solid ${active ? 'var(--green)' : 'var(--border)'}`,
-                    background:   active ? 'var(--green-light)' : '#fff',
-                    color:        active ? 'var(--green-dark)'  : 'var(--text)',
-                    fontFamily:   'var(--font-body)',
+                    background:   active ? '#E8F5F0' : '#fff',
+                    border:       `1.5px solid ${active ? '#1D9E75' : '#E0E0E0'}`,
+                    borderRadius: '20px',
+                    padding:      '8px 14px',
+                    display:      'inline-flex',
+                    alignItems:   'center',
+                    gap:          '6px',
                     fontSize:     '14px',
-                    fontWeight:   active ? 600 : 400,
+                    color:        active ? '#1D9E75' : '#333',
+                    fontWeight:   active ? 500 : 400,
+                    fontFamily:   'var(--font-body)',
                     cursor:       'pointer',
-                    whiteSpace:   'nowrap',
-                    transition:   'all 0.15s',
                   }}
                 >
-                  {p.emoji}  {p.name}
+                  {p.emoji} {p.name}
                 </button>
               )
             })}
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* ── Upload zone ────────────────────────────────────────────────────── */}
       <div style={card({ padding: '16px 20px' })}>
@@ -568,6 +558,37 @@ Respond in this exact JSON format only, no other text:
               >
                 Shop →
               </a>
+            </div>
+          )}
+
+          {/* Add to garden — only when no plant was selected */}
+          {!selectedPlantId && (
+            <div style={{
+              background:   'var(--cream)',
+              borderRadius: 'var(--radius)',
+              padding:      '18px 20px',
+              marginTop:    '10px',
+              textAlign:    'center',
+            }}>
+              <p style={{ margin: '0 0 12px', fontSize: '14px', color: 'var(--muted)' }}>
+                Add to garden?
+              </p>
+              <button
+                onClick={() => navigate('/add-plant')}
+                style={{
+                  padding:      '12px 24px',
+                  fontSize:     '14px',
+                  fontWeight:   500,
+                  fontFamily:   'var(--font-body)',
+                  color:        '#fff',
+                  background:   '#1D9E75',
+                  border:       'none',
+                  borderRadius: '20px',
+                  cursor:       'pointer',
+                }}
+              >
+                🌱 Add this plant
+              </button>
             </div>
           )}
 

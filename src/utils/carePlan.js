@@ -166,13 +166,10 @@ export async function generateCarePlan({ plantName, category, zone, zoneName, ci
   const currentMonth = MONTHS[new Date().getMonth()]
   const prompt = buildPrompt({ plantName, category, zone, zoneName, city, currentMonth, catalogWaterDays })
 
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
+  const res = await fetch('https://plantsaathi.com/api/claude-proxy.php', {
     method: 'POST',
     headers: {
-      'Content-Type':                              'application/json',
-      'x-api-key':                                 import.meta.env.VITE_ANTHROPIC_API_KEY,
-      'anthropic-version':                         '2023-06-01',
-      'anthropic-dangerous-direct-browser-access': 'true',
+      'Content-Type': 'application/json',
     },
     body: JSON.stringify({
       model:      'claude-sonnet-4-20250514',
