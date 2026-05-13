@@ -8,8 +8,7 @@ import CareCalendar from '../components/CareCalendar.jsx'
 
 export default function Profile() {
   const navigate   = useNavigate()
-  const { getUser, getPlants, clearUser } = useStorage()
-  const [showReset,    setShowReset]    = useState(false)
+  const { getUser, getPlants } = useStorage()
   const [calendarOpen, setCalendarOpen] = useState(false)
 
   const user   = getUser()
@@ -30,13 +29,6 @@ export default function Profile() {
   const daysTogether = user.joinedDate
     ? Math.max(1, Math.floor((now - new Date(user.joinedDate).getTime()) / (1000 * 60 * 60 * 24)))
     : 1
-
-  // ─── Reset handler ─────────────────────────────────────────────────────────
-  function confirmReset() {
-    clearUser()
-    localStorage.clear()
-    navigate('/onboarding', { replace: true })
-  }
 
   // ─── Styles ────────────────────────────────────────────────────────────────
   const page = {
@@ -454,28 +446,6 @@ export default function Profile() {
         </div>
       </div>
 
-      {/* ── Reset ──────────────────────────────────────────────────────────── */}
-      <div style={{ ...section, paddingBottom: '8px' }}>
-        <h2 style={{ ...sectionTitle, color: '#DC2626' }}>Danger zone</h2>
-        <button
-          onClick={() => setShowReset(true)}
-          style={{
-            width:        '100%',
-            padding:      '14px',
-            fontSize:     '15px',
-            fontFamily:   'var(--font-body)',
-            fontWeight:   500,
-            color:        '#DC2626',
-            background:   '#fff',
-            border:       '1.5px solid #DC2626',
-            borderRadius: 'var(--radius)',
-            cursor:       'pointer',
-          }}
-        >
-          Reset app
-        </button>
-      </div>
-
       {/* ── BottomNav ──────────────────────────────────────────────────────── */}
       <BottomNav />
 
@@ -484,98 +454,6 @@ export default function Profile() {
           plants={plants}
           onClose={() => setCalendarOpen(false)}
         />
-      )}
-
-      {/* ── Reset confirm modal ────────────────────────────────────────────── */}
-      {showReset && (
-        <div
-          onClick={() => setShowReset(false)}
-          style={{
-            position:   'fixed',
-            inset:      0,
-            background: 'rgba(0,0,0,0.45)',
-            display:    'flex',
-            alignItems: 'flex-end',
-            zIndex:     300,
-          }}
-        >
-          <div
-            onClick={e => e.stopPropagation()}
-            style={{
-              width:        '100%',
-              maxWidth:     '390px',
-              margin:       '0 auto',
-              background:   '#fff',
-              borderRadius: '20px 20px 0 0',
-              padding:      '28px 24px 44px',
-            }}
-          >
-            {/* Handle */}
-            <div style={{
-              width:        '36px',
-              height:       '4px',
-              background:   'var(--border)',
-              borderRadius: '99px',
-              margin:       '0 auto 24px',
-            }} />
-
-            <p style={{
-              fontFamily:  'var(--font-display)',
-              fontWeight:  500,
-              fontSize:    '20px',
-              color:       'var(--text)',
-              margin:      '0 0 10px',
-            }}>
-              Reset PlantSaathi?
-            </p>
-            <p style={{
-              fontSize:   '14px',
-              color:      'var(--muted)',
-              lineHeight: 1.6,
-              margin:     '0 0 28px',
-            }}>
-              This will delete all your data — your profile, all plants, and
-              diagnosis history. This cannot be undone.
-            </p>
-
-            <button
-              onClick={confirmReset}
-              style={{
-                width:        '100%',
-                padding:      '15px',
-                fontSize:     '15px',
-                fontFamily:   'var(--font-body)',
-                fontWeight:   500,
-                color:        '#fff',
-                background:   '#DC2626',
-                border:       'none',
-                borderRadius: 'var(--radius)',
-                cursor:       'pointer',
-                marginBottom: '12px',
-              }}
-            >
-              Yes, reset everything
-            </button>
-
-            <button
-              onClick={() => setShowReset(false)}
-              style={{
-                width:        '100%',
-                padding:      '15px',
-                fontSize:     '15px',
-                fontFamily:   'var(--font-body)',
-                fontWeight:   500,
-                color:        'var(--text)',
-                background:   'var(--cream)',
-                border:       '1px solid var(--border)',
-                borderRadius: 'var(--radius)',
-                cursor:       'pointer',
-              }}
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
       )}
 
     </div>

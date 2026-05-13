@@ -248,6 +248,8 @@ export default function CareTips() {
   // effect doesn't fire twice during React StrictMode's double-invoke in dev.
   const conditionFetchInFlight = useRef(false)
 
+  const photoInputRef = useRef(null)
+
   const watering      = plant.reminders?.watering
   const frequencyDays = watering?.frequencyDays
   const daysAgo       = watering?.lastCompleted ? daysSince(watering.lastCompleted) : null
@@ -283,13 +285,10 @@ export default function CareTips() {
     setTipsError(null)
     try {
       const currentMonth = MONTHS[new Date().getMonth()]
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
+      const res = await fetch('https://plantsaathi.com/api/claude-proxy.php', {
         method: 'POST',
         headers: {
-          'Content-Type':                              'application/json',
-          'x-api-key':                                 import.meta.env.VITE_ANTHROPIC_API_KEY,
-          'anthropic-version':                         '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true',
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           model:      'claude-sonnet-4-20250514',
@@ -372,13 +371,10 @@ Give care tips in this exact JSON format only:
       const currentMonth = MONTHS[new Date().getMonth()]
       const prompt = buildConditionPrompt({ plant, health, user, currentMonth })
 
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
+      const res = await fetch('https://plantsaathi.com/api/claude-proxy.php', {
         method: 'POST',
         headers: {
-          'Content-Type':                              'application/json',
-          'x-api-key':                                 import.meta.env.VITE_ANTHROPIC_API_KEY,
-          'anthropic-version':                         '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true',
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           model:      'claude-sonnet-4-20250514',
@@ -473,6 +469,18 @@ Give care tips in this exact JSON format only:
     setExpandedReminder(null)
     setFlashedReminder(type)
     setTimeout(() => setFlashedReminder(null), 600)
+  }
+
+  function handlePhotoChange(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = ev => {
+      updatePlant(plant.id, { photo: ev.target.result })
+      setTick(t => t + 1)
+    }
+    reader.readAsDataURL(file)
+    e.target.value = ''
   }
 
   // ─── Shared style tokens ──────────────────────────────────────────────────
@@ -592,18 +600,72 @@ Give care tips in this exact JSON format only:
       <div style={card({ overflow: 'hidden' })}>
         {/* Photo / placeholder */}
         <div style={{
+          position:       'relative',
           height:         '200px',
           background:     plant.photo ? '#111' : 'var(--green-light)',
           display:        'flex',
+          flexDirection:  'column',
           alignItems:     'center',
           justifyContent: 'center',
           fontSize:       '72px',
           overflow:       'hidden',
         }}>
-          {plant.photo
-            ? <img src={plant.photo} alt={plant.name} style={{ width:'100%', height:'100%', objectFit:'cover' }} />
-            : (plant.emoji ?? '🌿')
-          }
+          {plant.photo ? (
+            <>
+              <img src={plant.photo} alt={plant.name} style={{ width:'100%', height:'100%', objectFit:'cover' }} />
+              <button
+                onClick={() => photoInputRef.current?.click()}
+                aria-label="Change photo"
+                style={{
+                  position:       'absolute',
+                  top:            '8px',
+                  right:          '8px',
+                  background:     'rgba(255,255,255,0.9)',
+                  borderRadius:   '50%',
+                  width:          '36px',
+                  height:         '36px',
+                  display:        'flex',
+                  alignItems:     'center',
+                  justifyContent: 'center',
+                  fontSize:       '18px',
+                  cursor:         'pointer',
+                  border:         'none',
+                  boxShadow:      '0 2px 4px rgba(0,0,0,0.2)',
+                }}
+              >
+                📷
+              </button>
+            </>
+          ) : (
+            <>
+              <span>{plant.emoji ?? '🌿'}</span>
+              <button
+                onClick={() => photoInputRef.current?.click()}
+                style={{
+                  background:   '#1D9E75',
+                  color:        '#fff',
+                  borderRadius: '20px',
+                  padding:      '8px 20px',
+                  fontSize:     '13px',
+                  border:       'none',
+                  display:      'block',
+                  margin:       '8px auto 0',
+                  cursor:       'pointer',
+                  fontFamily:   'var(--font-body)',
+                }}
+              >
+                📷 Add Photo
+              </button>
+            </>
+          )}
+          <input
+            ref={photoInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            style={{ display: 'none' }}
+            onChange={handlePhotoChange}
+          />
         </div>
 
         {/* Plant info below photo */}
