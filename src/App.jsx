@@ -1,6 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Onboarding from './pages/Onboarding'
 import Home from './pages/Home'
+import Catalogue from './pages/Catalogue'
+import Wishlist from './pages/Wishlist'
 import Garden from './pages/Garden'
 import Diagnosis from './pages/Diagnosis'
 import AddPlant from './pages/AddPlant'
@@ -24,6 +26,18 @@ export default function App() {
           <Route
             path="/home"
             element={<RequireUser><Home /></RequireUser>}
+          />
+          <Route
+            path="/catalogue/search"
+            element={<RequireUser><Catalogue /></RequireUser>}
+          />
+          <Route
+            path="/catalogue/:filterType/:slug"
+            element={<RequireUser><Catalogue /></RequireUser>}
+          />
+          <Route
+            path="/wishlist"
+            element={<RequireUser><Wishlist /></RequireUser>}
           />
           <Route
             path="/garden"

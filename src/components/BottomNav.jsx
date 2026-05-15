@@ -1,4 +1,5 @@
 import { useNavigate, useLocation } from 'react-router-dom'
+import { useStorage } from '../hooks/useStorage.js'
 
 const TABS = [
   {
@@ -63,6 +64,8 @@ const TABS = [
 export default function BottomNav() {
   const navigate      = useNavigate()
   const { pathname }  = useLocation()
+  const { getWishlist } = useStorage()
+  const wishlistCount = getWishlist().length
 
   return (
     <nav style={{
@@ -79,7 +82,8 @@ export default function BottomNav() {
       paddingBottom: 'env(safe-area-inset-bottom, 0px)',
     }}>
       {TABS.map(tab => {
-        const active = pathname === tab.path || pathname.startsWith(tab.path + '/')
+        const active     = pathname === tab.path || pathname.startsWith(tab.path + '/')
+        const showBadge  = tab.path === '/home' && wishlistCount > 0
         return (
           <button
             key={tab.path}
@@ -100,10 +104,35 @@ export default function BottomNav() {
               fontWeight:     active ? 600 : 400,
               letterSpacing:  '0.2px',
               transition:     'color 0.15s',
+              position:       'relative',
             }}
           >
             {tab.icon}
             <span>{tab.label}</span>
+            {showBadge && (
+              <span style={{
+                position:       'absolute',
+                top:            '4px',
+                right:          '50%',
+                transform:      'translateX(20px)',
+                background:     '#FF6B6B',
+                color:          '#fff',
+                borderRadius:   '10px',
+                minWidth:       '18px',
+                height:         '18px',
+                fontSize:       '10px',
+                fontWeight:     700,
+                display:        'flex',
+                alignItems:     'center',
+                justifyContent: 'center',
+                padding:        '0 5px',
+                pointerEvents:  'none',
+                lineHeight:     1,
+                boxSizing:      'border-box',
+              }}>
+                {wishlistCount}
+              </span>
+            )}
           </button>
         )
       })}
