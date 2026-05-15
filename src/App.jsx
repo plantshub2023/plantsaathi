@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Onboarding from './pages/Onboarding'
+import Home from './pages/Home'
 import Garden from './pages/Garden'
 import Diagnosis from './pages/Diagnosis'
 import AddPlant from './pages/AddPlant'
@@ -20,6 +21,10 @@ export default function App() {
       <div className="app-shell">
         <Routes>
           <Route path="/onboarding" element={<Onboarding />} />
+          <Route
+            path="/home"
+            element={<RequireUser><Home /></RequireUser>}
+          />
           <Route
             path="/garden"
             element={<RequireUser><Garden /></RequireUser>}
