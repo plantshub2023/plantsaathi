@@ -8,11 +8,12 @@ import CareCalendar from '../components/CareCalendar.jsx'
 
 export default function Profile() {
   const navigate   = useNavigate()
-  const { getUser, getPlants } = useStorage()
+  const { getUser, getPlants, getWishlist } = useStorage()
   const [calendarOpen, setCalendarOpen] = useState(false)
 
-  const user   = getUser()
-  const plants = getPlants()
+  const user     = getUser()
+  const plants   = getPlants()
+  const wishlist = getWishlist()
 
   if (!user) { navigate('/onboarding', { replace: true }); return null }
 
@@ -76,6 +77,36 @@ export default function Profile() {
         }}>
           My Profile
         </h1>
+      </div>
+
+      {/* ── Wishlist link ──────────────────────────────────────────────────── */}
+      <div style={{ padding: '24px 20px 0' }}>
+        <button
+          onClick={() => navigate('/wishlist')}
+          style={{
+            width:          '100%',
+            background:     '#fff',
+            border:         '1px solid var(--border)',
+            borderRadius:   '12px',
+            padding:        '14px 16px',
+            display:        'flex',
+            justifyContent: 'space-between',
+            alignItems:     'center',
+            marginBottom:   '8px',
+            cursor:         'pointer',
+            fontFamily:     'var(--font-body)',
+          }}
+        >
+          <span style={{ fontSize: '15px', color: '#1a1a1a', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span>❤️</span> My Wishlist
+          </span>
+          <span style={{ display: 'flex', alignItems: 'center' }}>
+            <span style={{ fontSize: '13px', color: '#888' }}>
+              {wishlist.length} {wishlist.length === 1 ? 'plant' : 'plants'}
+            </span>
+            <span style={{ fontSize: '16px', color: '#aaa', marginLeft: '4px' }}>→</span>
+          </span>
+        </button>
       </div>
 
       {/* ── User Card ──────────────────────────────────────────────────────── */}

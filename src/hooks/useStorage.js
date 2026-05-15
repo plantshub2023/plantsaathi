@@ -154,6 +154,62 @@ export function useStorage() {
     }
   }
 
+  // ─── Wishlist ────────────────────────────────────────────────────────────────
+
+  function getWishlist() {
+    try { return JSON.parse(localStorage.getItem('wishlist') || '[]') }
+    catch { return [] }
+  }
+
+  function saveWishlist(items) {
+    localStorage.setItem('wishlist', JSON.stringify(items))
+  }
+
+  function isInWishlist(catalogPlantId) {
+    return getWishlist().some(item => item.id === catalogPlantId)
+  }
+
+  function addToWishlist(catalogPlant) {
+    const items = getWishlist()
+    if (items.some(item => item.id === catalogPlant.id)) return
+    items.push({
+      id:        catalogPlant.id,
+      name:      catalogPlant.name,
+      emoji:     catalogPlant.emoji,
+      price:     catalogPlant.price,
+      image:     catalogPlant.image,
+      url:       catalogPlant.url,
+      addedDate: new Date().toISOString(),
+    })
+    saveWishlist(items)
+  }
+
+  function removeFromWishlist(catalogPlantId) {
+    saveWishlist(getWishlist().filter(item => item.id !== catalogPlantId))
+  }
+
+  // Pops the wishlist item, seeds a garden plant from it, returns the new plant
+  // (or null if not found). Caller handles toasts/duplicate-name checks.
+  function moveWishlistToGarden(catalogPlantId) {
+    const items = getWishlist()
+    const item  = items.find(i => i.id === catalogPlantId)
+    if (!item) return null
+    const newPlant = addPlant({
+      name:           item.name,
+      emoji:          item.emoji,
+      photo:          null,
+      notes:          '',
+      category:       'general',
+      locationId:     null,
+      waterDays:      null,
+      plantshubUrl:   item.url,
+      plantshubPrice: item.price,
+      fromCatalogue:  true,
+    })
+    saveWishlist(items.filter(i => i.id !== catalogPlantId))
+    return newPlant
+  }
+
   // ─── Locations ───────────────────────────────────────────────────────────────
 
   function getLocations() {
@@ -188,6 +244,7 @@ export function useStorage() {
     savePlants, getPlants, addPlant,
     updatePlant, deletePlant, waterPlant,
     markReminder, saveDiagnosis,
+    getWishlist, isInWishlist, addToWishlist, removeFromWishlist, moveWishlistToGarden,
     getLocations, addLocation, updateLocation, deleteLocation,
   };
 }
