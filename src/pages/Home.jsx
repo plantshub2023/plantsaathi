@@ -93,6 +93,9 @@ export default function Home() {
     display:      'block',
     marginBottom: '6px',
     lineHeight:   1,
+    // Explicit emoji-font fallback chain — DM Sans has no emoji glyphs, so
+    // we point at the OS's color-emoji fonts before falling back to sans.
+    fontFamily:   '"Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji", sans-serif',
   }
 
   const categoryLabel = {
