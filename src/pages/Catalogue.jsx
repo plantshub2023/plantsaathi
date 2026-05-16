@@ -3,8 +3,11 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useStorage } from '../hooks/useStorage.js'
 import BottomNav from '../components/BottomNav.jsx'
 import { plantshubCatalogue } from '../data/plantshubCatalogue.js'
+import { getZone } from '../data/climateZones.js'
+import { getFamily, familySlugToDataName } from '../data/plantFamilies.js'
 
-// ─── Category metadata ──────────────────────────────────────────────────────
+// ─── Static title lookup (location/type/trending) ───────────────────────────
+// Climate and family titles are derived from their data files at render time.
 
 const TITLES = {
   location: {
@@ -22,24 +25,44 @@ const TITLES = {
     flowering:         '🌸 Flowering Plants',
     'air-purifying':   '🌬️ Air Purifier Plants',
     'low-maintenance': '💧 Low Care Plants',
-    foliage:           '🌿 Foliage Plants',
-    'sun-loving':      '☀️ Sun Loving Plants',
+    bonsai:            '🌳 Bonsai',
+    herbs:             '🌿 Herbs',
+    fruit:             '🥭 Fruit Plants',
+    climber:           '🌴 Climbers',
+    hanging:           '💐 Hanging Plants',
   },
   trending: {
-    gift:          '🎁 Gift Plants',
-    'office-desk': '💼 Office Desk Plants',
+    gift:                '🎁 Gift Plants',
+    'office-desk-trend': '💼 Office Desk Plants',
+    'new-arrival':       '🌟 New Arrivals',
+    premium:             '⭐ Premium Plants',
+    'good-luck':         '🍀 Good Luck Plants',
+    aromatic:            '🌶️ Aromatic Plants',
   },
 }
 
 function matchCategory(plant, filterType, slug) {
   if (filterType === 'location') return plant.locations.includes(slug)
   if (filterType === 'type')     return plant.types.includes(slug)
-  if (filterType === 'trending') {
-    // Special handling: "office-desk" lives in locations, "gift" in types
-    if (slug === 'office-desk') return plant.locations.includes('office-desk')
-    return plant.types.includes(slug)
+  if (filterType === 'trending') return plant.types.includes(slug)
+  if (filterType === 'climate')  return Array.isArray(plant.climate) && plant.climate.includes(slug)
+  if (filterType === 'family') {
+    const target = familySlugToDataName(slug)
+    return (plant.family || '').toLowerCase() === target
   }
   return true
+}
+
+function resolveTitle(filterType, slug) {
+  if (filterType === 'climate') {
+    const z = getZone(slug)
+    return z ? `${z.emoji} ${z.name} Plants` : 'Plants'
+  }
+  if (filterType === 'family') {
+    const f = getFamily(slug)
+    return f ? `${f.emoji} ${f.name} Collection` : 'Plants'
+  }
+  return TITLES[filterType]?.[slug] || 'Plants'
 }
 
 // ─── Plant thumbnail with image-error fallback ──────────────────────────────
@@ -201,9 +224,7 @@ export default function Catalogue() {
     setTimeout(() => setToast(null), 2500)
   }
 
-  const title = isSearchMode
-    ? 'Search Results'
-    : (TITLES[filterType]?.[slug] || 'Plants')
+  const title = isSearchMode ? 'Search Results' : resolveTitle(filterType, slug)
 
   const filtered = useMemo(() => {
     let list = plantshubCatalogue
@@ -214,7 +235,9 @@ export default function Catalogue() {
     if (q) list = list.filter(p => p.name.toLowerCase().includes(q))
     if (stockFilter === 'in-stock')     list = list.filter(p => p.inStock)
     if (stockFilter === 'out-of-stock') list = list.filter(p => !p.inStock)
-    return list
+    // In-stock first, out-of-stock at the bottom. Stable sort preserves
+    // catalogue order within each bucket.
+    return [...list].sort((a, b) => Number(b.inStock) - Number(a.inStock))
   }, [filterType, slug, isSearchMode, searchQuery, stockFilter])
 
   function handleBuy(plant) {
@@ -237,7 +260,7 @@ export default function Catalogue() {
 
   const stockChips = [
     { key: 'all',          label: 'All' },
-    { key: 'in-stock',     label: '✅ In Stock' },
+    { key: 'in-stock',     label: '✅ In Stock Only' },
     { key: 'out-of-stock', label: 'Out of Stock' },
   ]
 
