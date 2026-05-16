@@ -8,8 +8,8 @@ const TABS = [
     icon: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
         stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="12" cy="12" r="10" />
-        <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
+        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+        <polyline points="9 22 9 12 15 12 15 22" />
       </svg>
     ),
   },
@@ -19,8 +19,9 @@ const TABS = [
     icon: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
         stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-        <polyline points="9 22 9 12 15 12 15 22" />
+        <path d="M12 22V12" />
+        <path d="M12 12c-3-3-3-7 0-10 3 3 3 7 0 10z" />
+        <path d="M12 12c3 0 6 2 8 5-2 3-5 5-8 5-3 0-6-2-8-5 2-3 5-5 8-5z" />
       </svg>
     ),
   },
