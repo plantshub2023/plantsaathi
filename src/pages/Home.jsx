@@ -2,8 +2,14 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStorage } from '../hooks/useStorage.js'
 import BottomNav from '../components/BottomNav.jsx'
+import { climateZones } from '../data/climateZones.js'
+import { plantFamilies } from '../data/plantFamilies.js'
 
-// ─── Category grids ──────────────────────────────────────────────────────────
+// ─── Static section data ────────────────────────────────────────────────────
+
+// Codes shown first on Home — the six most common Indian zones. The
+// remaining climates surface via the "View all zones" toggle below.
+const TOP_CLIMATE_CODES = ['Z2', 'Z7', 'Z11', 'Z12', 'Z16', 'Z17']
 
 const LOCATIONS = [
   { slug: 'indoor',      emoji: '🏠', label: 'Indoor'      },
@@ -21,14 +27,96 @@ const TYPES = [
   { slug: 'flowering',       emoji: '🌸', label: 'Flowering'    },
   { slug: 'air-purifying',   emoji: '🌬️', label: 'Air Purifier' },
   { slug: 'low-maintenance', emoji: '💧', label: 'Low Care'     },
-  { slug: 'foliage',         emoji: '🌿', label: 'Foliage'      },
-  { slug: 'sun-loving',      emoji: '☀️', label: 'Sun Loving'   },
+  { slug: 'bonsai',          emoji: '🌳', label: 'Bonsai'       },
+  { slug: 'herbs',           emoji: '🌿', label: 'Herbs'        },
+  { slug: 'fruit',           emoji: '🥭', label: 'Fruit'        },
+  { slug: 'climber',         emoji: '🌴', label: 'Climbers'     },
+  { slug: 'hanging',         emoji: '💐', label: 'Hanging'      },
 ]
 
 const TRENDING = [
-  { slug: 'gift',        emoji: '🎁', label: 'Gift Plants'         },
-  { slug: 'office-desk', emoji: '💼', label: 'Office Desk Plants'  },
+  { slug: 'gift',              emoji: '🎁', label: 'Gift Plants'  },
+  { slug: 'office-desk-trend', emoji: '💼', label: 'Office Desk'  },
+  { slug: 'new-arrival',       emoji: '🌟', label: 'New Arrivals' },
+  { slug: 'premium',           emoji: '⭐', label: 'Premium'      },
+  { slug: 'good-luck',         emoji: '🍀', label: 'Good Luck'    },
+  { slug: 'aromatic',          emoji: '🌶️', label: 'Aromatic'     },
 ]
+
+const VISIBLE_FAMILY_COUNT = 15
+
+// ─── Shared style fragments ─────────────────────────────────────────────────
+
+const sectionTitle = {
+  fontSize:      '14px',
+  fontWeight:    700,
+  color:         '#1a1a1a',
+  textTransform: 'uppercase',
+  letterSpacing: '0.5px',
+  padding:       '0 16px',
+  marginTop:     '20px',
+  marginBottom:  '4px',
+}
+
+const sectionSubtitle = {
+  fontSize:     '12px',
+  color:        '#666',
+  padding:      '0 16px',
+  marginBottom: '12px',
+}
+
+const grid3 = {
+  padding:             '0 16px',
+  display:             'grid',
+  gridTemplateColumns: 'repeat(3, 1fr)',
+  gap:                 '10px',
+}
+
+const grid2 = {
+  padding:             '0 16px',
+  display:             'grid',
+  gridTemplateColumns: 'repeat(2, 1fr)',
+  gap:                 '10px',
+}
+
+const categoryCard = {
+  background:   '#fff',
+  borderRadius: '14px',
+  padding:      '16px 10px',
+  textAlign:    'center',
+  cursor:       'pointer',
+  boxShadow:    '0 2px 8px rgba(0,0,0,0.05)',
+  transition:   'transform 0.2s',
+  border:       'none',
+  fontFamily:   'var(--font-body)',
+}
+
+const categoryEmoji = {
+  fontSize:     '36px',
+  display:      'block',
+  marginBottom: '6px',
+  lineHeight:   1,
+  fontFamily:   '"Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji", sans-serif',
+}
+
+const categoryLabel = {
+  fontSize:   '12px',
+  fontWeight: 600,
+  color:      '#1a1a1a',
+}
+
+const viewAllLink = {
+  display:    'block',
+  textAlign:  'right',
+  padding:    '8px 16px 0',
+  fontSize:   '12px',
+  color:      '#1D9E75',
+  background: 'none',
+  border:     'none',
+  cursor:     'pointer',
+  width:      '100%',
+  fontFamily: 'var(--font-body)',
+}
 
 // ─── Page ───────────────────────────────────────────────────────────────────
 
@@ -38,71 +126,26 @@ export default function Home() {
   const user     = getUser()
   const wishlist = getWishlist()
 
-  const [searchQuery, setSearchQuery] = useState('')
+  const [searchQuery,      setSearchQuery]      = useState('')
+  const [showAllZones,     setShowAllZones]     = useState(false)
+  const [showAllFamilies,  setShowAllFamilies]  = useState(false)
 
   function goToSearch() {
     const q = searchQuery.trim()
     navigate(q ? `/catalogue/search?q=${encodeURIComponent(q)}` : '/catalogue/search')
   }
 
-  function goToCategory(filterType, slug) {
-    navigate(`/catalogue/${filterType}/${slug}`)
-  }
+  // ─── Derived ─────────────────────────────────────────────────────────────
 
-  // ─── Styles ──────────────────────────────────────────────────────────────
+  const visibleZones = showAllZones
+    ? climateZones
+    : climateZones.filter(z => TOP_CLIMATE_CODES.includes(z.code))
 
-  const sectionTitle = {
-    fontSize:      '14px',
-    fontWeight:    700,
-    color:         '#1a1a1a',
-    textTransform: 'uppercase',
-    letterSpacing: '0.5px',
-    padding:       '0 16px',
-    marginTop:     '20px',
-    marginBottom:  '12px',
-  }
+  const visibleFamilies = showAllFamilies
+    ? plantFamilies
+    : plantFamilies.slice(0, VISIBLE_FAMILY_COUNT)
 
-  const grid3 = {
-    padding:             '0 16px',
-    display:             'grid',
-    gridTemplateColumns: 'repeat(3, 1fr)',
-    gap:                 '10px',
-  }
-
-  const grid2 = {
-    padding:             '0 16px',
-    display:             'grid',
-    gridTemplateColumns: 'repeat(2, 1fr)',
-    gap:                 '10px',
-  }
-
-  const categoryCard = {
-    background:   '#fff',
-    borderRadius: '14px',
-    padding:      '16px 10px',
-    textAlign:    'center',
-    cursor:       'pointer',
-    boxShadow:    '0 2px 8px rgba(0,0,0,0.05)',
-    transition:   'transform 0.2s',
-    border:       'none',
-    fontFamily:   'var(--font-body)',
-  }
-
-  const categoryEmoji = {
-    fontSize:     '36px',
-    display:      'block',
-    marginBottom: '6px',
-    lineHeight:   1,
-    // Explicit emoji-font fallback chain — DM Sans has no emoji glyphs, so
-    // we point at the OS's color-emoji fonts before falling back to sans.
-    fontFamily:   '"Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji", sans-serif',
-  }
-
-  const categoryLabel = {
-    fontSize:   '12px',
-    fontWeight: 600,
-    color:      '#1a1a1a',
-  }
+  const userZoneCode = user?.zone || null
 
   return (
     <div style={{
@@ -113,7 +156,7 @@ export default function Home() {
       paddingBottom: '88px',
     }}>
       <style>{`
-        .home-wishlist-scroll::-webkit-scrollbar { display: none; }
+        .home-h-scroll::-webkit-scrollbar { display: none; }
         .home-cat-card:active { transform: scale(0.97); }
       `}</style>
 
@@ -183,14 +226,9 @@ export default function Home() {
             justifyContent: 'space-between',
             alignItems:     'center',
             padding:        '0 16px',
-            marginTop:      '4px',
             marginBottom:   '8px',
           }}>
-            <div style={{
-              fontSize:   '15px',
-              fontWeight: 600,
-              color:      '#1a1a1a',
-            }}>
+            <div style={{ fontSize: '15px', fontWeight: 600, color: '#1a1a1a' }}>
               ❤️ My Wishlist ({wishlist.length})
             </div>
             <button
@@ -209,13 +247,13 @@ export default function Home() {
             </button>
           </div>
           <div
-            className="home-wishlist-scroll"
+            className="home-h-scroll"
             style={{
-              padding:        '0 16px 16px',
-              display:        'flex',
-              gap:            '10px',
-              overflowX:      'auto',
-              scrollbarWidth: 'none',
+              padding:         '0 16px 16px',
+              display:         'flex',
+              gap:             '10px',
+              overflowX:       'auto',
+              scrollbarWidth:  'none',
               msOverflowStyle: 'none',
             }}
           >
@@ -278,32 +316,148 @@ export default function Home() {
         </>
       )}
 
-      {/* Plants by Location */}
+      {/* Section 1 — Plants by Climate Zone */}
+      <div style={sectionTitle}>🌍 Plants by Climate Zone</div>
+      <div style={sectionSubtitle}>Find plants perfect for your weather</div>
+      <div style={grid3}>
+        {visibleZones.map(zone => {
+          const isUserZone = userZoneCode === zone.code
+          return (
+            <button
+              key={zone.code}
+              className="home-cat-card"
+              onClick={() => navigate(`/catalogue/climate/${zone.code}`)}
+              style={{
+                ...categoryCard,
+                padding:  '14px 8px',
+                position: 'relative',
+                border:   isUserZone ? '2px solid #1D9E75' : '2px solid transparent',
+              }}
+            >
+              {isUserZone && (
+                <span style={{
+                  position:     'absolute',
+                  top:          '-7px',
+                  right:        '6px',
+                  background:   '#1D9E75',
+                  color:        '#fff',
+                  fontSize:     '9px',
+                  fontWeight:   700,
+                  padding:      '2px 6px',
+                  borderRadius: '8px',
+                  lineHeight:   1.2,
+                  letterSpacing: '0.3px',
+                }}>
+                  Your zone
+                </span>
+              )}
+              <span style={{ ...categoryEmoji, fontSize: '24px', marginBottom: '4px' }}>
+                {zone.emoji}
+              </span>
+              <div style={{ fontSize: '11px', color: '#888', marginTop: '4px' }}>
+                {zone.code}
+              </div>
+              <div style={{ fontSize: '12px', fontWeight: 600, color: '#1a1a1a', lineHeight: 1.2 }}>
+                {zone.name}
+              </div>
+              <div style={{ fontSize: '10px', color: '#aaa', marginTop: '2px' }}>
+                {zone.maxTemp}°C
+              </div>
+            </button>
+          )
+        })}
+      </div>
+      <button onClick={() => setShowAllZones(v => !v)} style={viewAllLink}>
+        {showAllZones ? 'Show less ←' : 'View all zones →'}
+      </button>
+
+      {/* Section 2 — Plants by Name (family chips) */}
+      <div style={sectionTitle}>🌱 Plants by Name</div>
+      <div
+        className="home-h-scroll"
+        style={{
+          padding:         '0 16px 8px',
+          display:         'flex',
+          gap:             '10px',
+          overflowX:       'auto',
+          scrollbarWidth:  'none',
+          msOverflowStyle: 'none',
+        }}
+      >
+        {visibleFamilies.map(f => (
+          <button
+            key={f.slug}
+            onClick={() => navigate(`/catalogue/family/${f.slug}`)}
+            style={{
+              background:    '#fff',
+              borderRadius:  '24px',
+              padding:       '8px 14px',
+              whiteSpace:    'nowrap',
+              cursor:        'pointer',
+              border:        '1.5px solid #E0E0E0',
+              display:       'inline-flex',
+              alignItems:    'center',
+              gap:           '6px',
+              flexShrink:    0,
+              fontFamily:    'var(--font-body)',
+            }}
+          >
+            <span style={{
+              fontSize:   '16px',
+              lineHeight: 1,
+              fontFamily: '"Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji", sans-serif',
+            }}>
+              {f.emoji}
+            </span>
+            <span style={{ fontSize: '13px', color: '#1a1a1a' }}>{f.name}</span>
+            <span style={{ fontSize: '10px', color: '#888', opacity: 0.7 }}>({f.count})</span>
+          </button>
+        ))}
+        {plantFamilies.length > VISIBLE_FAMILY_COUNT && (
+          <button
+            onClick={() => setShowAllFamilies(v => !v)}
+            style={{
+              background:    'none',
+              border:        'none',
+              padding:       '8px 14px',
+              cursor:        'pointer',
+              fontSize:      '13px',
+              color:         '#1D9E75',
+              whiteSpace:    'nowrap',
+              flexShrink:    0,
+              fontFamily:    'var(--font-body)',
+            }}
+          >
+            {showAllFamilies ? 'Show less ←' : 'View all →'}
+          </button>
+        )}
+      </div>
+
+      {/* Section 3 — Plants by Location */}
       <div style={sectionTitle}>📍 Plants by Location</div>
       <div style={grid3}>
         {LOCATIONS.map(c => (
           <button
             key={c.slug}
             className="home-cat-card"
-            onClick={() => goToCategory('location', c.slug)}
+            onClick={() => navigate(`/catalogue/location/${c.slug}`)}
             style={categoryCard}
           >
             <span style={categoryEmoji}>{c.emoji}</span>
             <span style={categoryLabel}>{c.label}</span>
           </button>
         ))}
-        {/* empty 9th cell */}
         <div />
       </div>
 
-      {/* Plants by Type */}
-      <div style={sectionTitle}>🌱 Plants by Type</div>
+      {/* Section 4 — Plants by Type */}
+      <div style={sectionTitle}>🌿 Plants by Type</div>
       <div style={grid3}>
         {TYPES.map(c => (
           <button
             key={c.slug}
             className="home-cat-card"
-            onClick={() => goToCategory('type', c.slug)}
+            onClick={() => navigate(`/catalogue/type/${c.slug}`)}
             style={categoryCard}
           >
             <span style={categoryEmoji}>{c.emoji}</span>
@@ -312,14 +466,14 @@ export default function Home() {
         ))}
       </div>
 
-      {/* Trending */}
+      {/* Section 5 — Trending */}
       <div style={sectionTitle}>🛍️ Trending</div>
       <div style={grid2}>
         {TRENDING.map(c => (
           <button
             key={c.slug}
             className="home-cat-card"
-            onClick={() => goToCategory('trending', c.slug)}
+            onClick={() => navigate(`/catalogue/trending/${c.slug}`)}
             style={categoryCard}
           >
             <span style={categoryEmoji}>{c.emoji}</span>
@@ -328,7 +482,7 @@ export default function Home() {
         ))}
       </div>
 
-      {/* Phase 2 placeholder */}
+      {/* Section 6 — Phase 2 placeholder */}
       <div style={{
         position:     'relative',
         margin:       '20px 16px',
