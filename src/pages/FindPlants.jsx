@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useStorage } from '../hooks/useStorage.js'
 import { plantshubCatalogue } from '../data/plantshubCatalogue.js'
+import { trackFinderCompleted } from '../utils/analytics.js'
 
 // ─── Wizard option lists ────────────────────────────────────────────────────
 
@@ -439,6 +440,8 @@ export default function FindPlants() {
         results:   recs,
         photoUsed: !!answers.photo,
       })
+      // Analytics: spaceType is an enum from SPACE_OPTIONS; photoUsed is boolean.
+      trackFinderCompleted(answers.spaceType, !!answers.photo)
       if (import.meta.env.DEV) {
         try {
           console.log('💾 lastFinderSession', JSON.parse(localStorage.getItem('finderSession')))

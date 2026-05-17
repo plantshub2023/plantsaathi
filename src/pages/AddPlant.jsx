@@ -2,6 +2,7 @@ import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { PLANTS } from '../data/plants.js'
 import { useStorage } from '../hooks/useStorage.js'
+import { trackPlantAdded } from '../utils/analytics.js'
 
 // ─── Photo → base64 helper ────────────────────────────────────────────────────
 // Stage 1: FileReader reads the raw file into a base64 data URL.
@@ -80,14 +81,26 @@ export default function AddPlant() {
   }
 
   function handleComplete() {
+    const trimmedName = name.trim()
     const newPlant = addPlant({
-      name:  name.trim(),
+      name:  trimmedName,
       emoji,
       notes: notes.trim(),
       photo,
       waterDays,
       category,
     })
+
+    // Analytics: distinguish catalog vs free-text by matching against the
+    // public PLANTS catalog. Free-text names may contain PII, so we send a
+    // sentinel value instead of the user's input.
+    const isCatalogName = PLANTS.some(p => p.name === trimmedName)
+    if (isCatalogName) {
+      trackPlantAdded(trimmedName, 'catalog')
+    } else {
+      trackPlantAdded('free_text_plant', 'free_text')
+    }
+
     navigate(`/recommended-plan/${newPlant.id}`)
   }
 

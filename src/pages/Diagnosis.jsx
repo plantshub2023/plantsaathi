@@ -1,6 +1,8 @@
 import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStorage } from '../hooks/useStorage.js'
+import { PLANTS } from '../data/plants.js'
+import { trackDiagnosisRun } from '../utils/analytics.js'
 import BottomNav from '../components/BottomNav.jsx'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -139,6 +141,12 @@ Respond in this exact JSON format only, no other text:
 
       const diagnosis = JSON.parse(jsonMatch[0])
       setResult(diagnosis)
+
+      // Analytics: only send name if it matches the public PLANTS catalog —
+      // user-edited names may contain PII.
+      const isCatalogName = !!selectedPlant?.name &&
+        PLANTS.some(p => p.name === selectedPlant.name)
+      trackDiagnosisRun(isCatalogName ? selectedPlant.name : 'unknown')
 
       // Persist to plant history
       if (selectedPlantId) {

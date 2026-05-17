@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStorage } from '../hooks/useStorage'
+import { trackPlantIdentified } from '../utils/analytics'
 import BottomNav from '../components/BottomNav'
 
 // ─── Resize uploaded photo before sending ─────────────────────────────────────
@@ -122,7 +123,9 @@ Respond in this exact JSON format only, no other text:
       if (!jsonMatch) throw new Error('Could not parse AI response — please try again')
 
       setResult(JSON.parse(jsonMatch[0]))
+      trackPlantIdentified(true)
     } catch (err) {
+      trackPlantIdentified(false)
       setError(err.message || 'Something went wrong. Please try again.')
     } finally {
       setLoading(false)
