@@ -7,9 +7,10 @@ import { plantFamilies } from '../data/plantFamilies.js'
 
 // ─── Static section data ────────────────────────────────────────────────────
 
-// Codes shown first on Home — the six most common Indian zones. The
-// remaining climates surface via the "View all zones" toggle below.
-const TOP_CLIMATE_CODES = ['Z2', 'Z7', 'Z11', 'Z12', 'Z16', 'Z17']
+// Codes shown first on Home — the nine most common Indian zones by
+// city count (Z16=95, Z7=43, Z11=42, Z13=40, Z18=28, Z14=27, Z1=23,
+// Z12=18, Z2=16). Remaining climates surface via "View all zones".
+const TOP_CLIMATE_CODES = ['Z16', 'Z7', 'Z11', 'Z13', 'Z18', 'Z14', 'Z1', 'Z12', 'Z2']
 
 const LOCATIONS = [
   { slug: 'indoor',      emoji: '🏠', label: 'Indoor'      },
@@ -126,9 +127,8 @@ export default function Home() {
   const user     = getUser()
   const wishlist = getWishlist()
 
-  const [searchQuery,      setSearchQuery]      = useState('')
-  const [showAllZones,     setShowAllZones]     = useState(false)
-  const [showAllFamilies,  setShowAllFamilies]  = useState(false)
+  const [searchQuery,  setSearchQuery]  = useState('')
+  const [showAllZones, setShowAllZones] = useState(false)
 
   function goToSearch() {
     const q = searchQuery.trim()
@@ -139,11 +139,11 @@ export default function Home() {
 
   const visibleZones = showAllZones
     ? climateZones
-    : climateZones.filter(z => TOP_CLIMATE_CODES.includes(z.code))
+    : TOP_CLIMATE_CODES
+        .map(code => climateZones.find(z => z.code === code))
+        .filter(Boolean)
 
-  const visibleFamilies = showAllFamilies
-    ? plantFamilies
-    : plantFamilies.slice(0, VISIBLE_FAMILY_COUNT)
+  const visibleFamilies = plantFamilies.slice(0, VISIBLE_FAMILY_COUNT)
 
   const userZoneCode = user?.zone || null
 
@@ -376,12 +376,14 @@ export default function Home() {
       <div
         className="home-h-scroll"
         style={{
-          padding:         '0 16px 8px',
-          display:         'flex',
-          gap:             '10px',
-          overflowX:       'auto',
-          scrollbarWidth:  'none',
-          msOverflowStyle: 'none',
+          padding:           '0 16px 8px',
+          display:           'flex',
+          gap:               '10px',
+          overflowX:         'auto',
+          scrollPaddingRight: '16px',
+          scrollBehavior:    'smooth',
+          scrollbarWidth:    'none',
+          msOverflowStyle:   'none',
         }}
       >
         {visibleFamilies.map(f => (
@@ -391,7 +393,7 @@ export default function Home() {
             style={{
               background:    '#fff',
               borderRadius:  '24px',
-              padding:       '8px 14px',
+              padding:       '7px 12px',
               whiteSpace:    'nowrap',
               cursor:        'pointer',
               border:        '1.5px solid #E0E0E0',
@@ -399,6 +401,8 @@ export default function Home() {
               alignItems:    'center',
               gap:           '6px',
               flexShrink:    0,
+              minWidth:      'fit-content',
+              fontSize:      '13px',
               fontFamily:    'var(--font-body)',
             }}
           >
@@ -409,28 +413,31 @@ export default function Home() {
             }}>
               {f.emoji}
             </span>
-            <span style={{ fontSize: '13px', color: '#1a1a1a' }}>{f.name}</span>
+            <span style={{ color: '#1a1a1a' }}>{f.name}</span>
             <span style={{ fontSize: '10px', color: '#888', opacity: 0.7 }}>({f.count})</span>
           </button>
         ))}
-        {plantFamilies.length > VISIBLE_FAMILY_COUNT && (
-          <button
-            onClick={() => setShowAllFamilies(v => !v)}
-            style={{
-              background:    'none',
-              border:        'none',
-              padding:       '8px 14px',
-              cursor:        'pointer',
-              fontSize:      '13px',
-              color:         '#1D9E75',
-              whiteSpace:    'nowrap',
-              flexShrink:    0,
-              fontFamily:    'var(--font-body)',
-            }}
-          >
-            {showAllFamilies ? 'Show less ←' : 'View all →'}
-          </button>
-        )}
+        <button
+          onClick={() => navigate('/catalogue/families')}
+          style={{
+            background:    '#E8F5F0',
+            border:        'none',
+            borderRadius:  '24px',
+            padding:       '7px 14px',
+            cursor:        'pointer',
+            fontSize:      '12px',
+            fontWeight:    600,
+            color:         '#1D9E75',
+            whiteSpace:    'nowrap',
+            flexShrink:    0,
+            minWidth:      'fit-content',
+            fontFamily:    'var(--font-body)',
+          }}
+        >
+          View all →
+        </button>
+        {/* trailing spacer so last chip has breathing room */}
+        <div style={{ width: '16px', flexShrink: 0 }} />
       </div>
 
       {/* Section 3 — Plants by Location */}
