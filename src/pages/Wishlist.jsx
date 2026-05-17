@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStorage } from '../hooks/useStorage.js'
 import BottomNav from '../components/BottomNav.jsx'
+import usePageTitle from '../hooks/usePageTitle.js'
 
 // ─── Thumbnail with image-error fallback ────────────────────────────────────
 
@@ -39,6 +40,7 @@ function PlantThumbnail({ item }) {
 // ─── Page ───────────────────────────────────────────────────────────────────
 
 export default function Wishlist() {
+  usePageTitle('Wishlist')
   const navigate = useNavigate()
   const {
     getWishlist, removeFromWishlist, moveWishlistToGarden, getPlants,

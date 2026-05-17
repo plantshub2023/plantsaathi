@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useStorage } from '../hooks/useStorage.js'
 import { plantshubCatalogue } from '../data/plantshubCatalogue.js'
 import { trackFinderCompleted } from '../utils/analytics.js'
+import usePageTitle from '../hooks/usePageTitle.js'
 
 // ─── Wizard option lists ────────────────────────────────────────────────────
 
@@ -178,6 +179,7 @@ function extractJSON(text) {
 // ─── Component ──────────────────────────────────────────────────────────────
 
 export default function FindPlants() {
+  usePageTitle('Find Plants for My Space')
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const { getUser, getFinderSession, saveFinderSession, clearFinderSession } = useStorage()

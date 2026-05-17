@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useStorage } from '../hooks/useStorage.js'
+import usePageTitle from '../hooks/usePageTitle.js'
 
 export default function LocationDetail() {
   const { id }   = useParams()
@@ -20,6 +21,8 @@ export default function LocationDetail() {
   const loc       = isAll
     ? { id: 'all', name: 'All', icon: '🌱' }
     : locations.find(l => l.id === id)
+
+  usePageTitle(loc?.name || 'Location')
 
   // Name input: initialized once from storage on mount
   const [nameValue, setNameValue] = useState(() => loc?.name ?? '')

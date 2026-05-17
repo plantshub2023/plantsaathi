@@ -4,6 +4,7 @@ import { useStorage } from '../hooks/useStorage.js'
 import BottomNav from '../components/BottomNav.jsx'
 import { climateZones } from '../data/climateZones.js'
 import { plantFamilies } from '../data/plantFamilies.js'
+import usePageTitle from '../hooks/usePageTitle.js'
 
 // ─── Static section data ────────────────────────────────────────────────────
 
@@ -124,6 +125,7 @@ const viewAllLink = {
 // ─── Page ───────────────────────────────────────────────────────────────────
 
 export default function Home() {
+  usePageTitle('Home')
   const navigate = useNavigate()
   const { getUser, getWishlist, getFinderSession } = useStorage()
   const user           = getUser()

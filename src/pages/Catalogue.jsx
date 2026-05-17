@@ -5,6 +5,7 @@ import BottomNav from '../components/BottomNav.jsx'
 import { plantshubCatalogue } from '../data/plantshubCatalogue.js'
 import { getZone } from '../data/climateZones.js'
 import { getFamily, familySlugToDataName } from '../data/plantFamilies.js'
+import usePageTitle from '../hooks/usePageTitle.js'
 
 // ─── Static title lookup (location/type/trending) ───────────────────────────
 // Climate and family titles are derived from their data files at render time.
@@ -225,6 +226,7 @@ export default function Catalogue() {
   }
 
   const title = isSearchMode ? 'Search Results' : resolveTitle(filterType, slug)
+  usePageTitle(title)
 
   const filtered = useMemo(() => {
     let list = plantshubCatalogue
