@@ -12,6 +12,7 @@ import PlantIdentifier from './pages/PlantIdentifier'
 import LocationDetail from './pages/LocationDetail'
 import RecommendedPlan from './pages/RecommendedPlan'
 import PlantFamilies from './pages/PlantFamilies'
+import FindPlants from './pages/FindPlants'
 
 function RequireUser({ children }) {
   const user = localStorage.getItem('user')
@@ -79,6 +80,10 @@ export default function App() {
           <Route
             path="/plant-families"
             element={<RequireUser><PlantFamilies /></RequireUser>}
+          />
+          <Route
+            path="/find-plants"
+            element={<RequireUser><FindPlants /></RequireUser>}
           />
           <Route
             path="*"
