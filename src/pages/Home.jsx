@@ -125,9 +125,10 @@ const viewAllLink = {
 
 export default function Home() {
   const navigate = useNavigate()
-  const { getUser, getWishlist } = useStorage()
-  const user     = getUser()
-  const wishlist = getWishlist()
+  const { getUser, getWishlist, getFinderSession } = useStorage()
+  const user           = getUser()
+  const wishlist       = getWishlist()
+  const finderSession  = getFinderSession()   // null if none, or { date, daysAgo, ... }
 
   const [searchQuery,  setSearchQuery]  = useState('')
   const [showAllZones, setShowAllZones] = useState(false)
@@ -475,35 +476,57 @@ export default function Home() {
         ))}
       </div>
 
-      {/* Section 6 — Phase 2 placeholder */}
-      <div style={{
-        position:     'relative',
-        margin:       '20px 16px',
-        padding:      '20px',
-        borderRadius: '16px',
-        background:   'linear-gradient(135deg, #1D9E75 0%, #2ECC71 100%)',
-        color:        '#fff',
-      }}>
-        <span style={{
-          position:     'absolute',
-          top:          '12px',
-          right:        '12px',
-          background:   'rgba(255,255,255,0.2)',
-          padding:      '2px 8px',
-          borderRadius: '10px',
-          fontSize:     '10px',
-          fontWeight:   600,
-        }}>
-          Phase 2
-        </span>
+      {/* Section 6 — Smart finder entry point */}
+      <button
+        onClick={() => navigate('/find-plants')}
+        style={{
+          display:      'block',
+          textAlign:    'left',
+          width:        'calc(100% - 32px)',
+          margin:       '20px 16px 0',
+          padding:      '20px',
+          borderRadius: '16px',
+          background:   'linear-gradient(135deg, #1D9E75 0%, #2ECC71 100%)',
+          color:        '#fff',
+          border:       'none',
+          cursor:       'pointer',
+          fontFamily:   'var(--font-body)',
+        }}
+      >
         <div style={{ fontSize: '32px', marginBottom: '8px', lineHeight: 1 }}>🔮</div>
         <div style={{ fontSize: '16px', fontWeight: 600 }}>
           Find Plants for My Space
         </div>
         <div style={{ fontSize: '12px', opacity: 0.9, marginTop: '4px', lineHeight: 1.5 }}>
-          Coming soon — AI will suggest plants based on your space, light & maintenance needs
+          AI will suggest plants based on your space and care preferences
         </div>
-      </div>
+      </button>
+      {finderSession && (
+        <button
+          onClick={() => navigate('/find-plants?session=last')}
+          style={{
+            display:    'block',
+            width:      'calc(100% - 32px)',
+            margin:     '6px 16px 0',
+            padding:    '8px 12px',
+            background: '#fff',
+            border:     '1px solid #E0E0E0',
+            borderRadius: '12px',
+            cursor:     'pointer',
+            fontSize:   '12px',
+            color:      '#1D9E75',
+            fontWeight: 600,
+            textAlign:  'left',
+            fontFamily: 'var(--font-body)',
+          }}
+        >
+          ↩ View your last results
+          <span style={{ color: '#888', fontWeight: 400, marginLeft: '6px' }}>
+            ({finderSession.daysAgo === 0 ? 'today' : `${finderSession.daysAgo}d ago`}
+            {finderSession.count ? ` · ${finderSession.count} plants` : ''})
+          </span>
+        </button>
+      )}
 
       <BottomNav />
     </div>

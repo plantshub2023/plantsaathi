@@ -210,6 +210,37 @@ export function useStorage() {
     return newPlant
   }
 
+  // ─── Smart Finder session ────────────────────────────────────────────────────
+  // One slot only — overwritten on each new run. Lives at `finderSession`.
+  // Shape: { date: ISO, answers: {...}, results: [{ plantId, matchScore, whyPerfect }] }
+
+  function saveFinderSession(session) {
+    localStorage.setItem('finderSession', JSON.stringify({
+      ...session,
+      date: new Date().toISOString(),
+    }))
+  }
+
+  // Returns null when missing or older than 7 days. Adds `daysAgo` and `count`
+  // for convenience so the Home banner can render without re-deriving.
+  function getFinderSession() {
+    const raw = localStorage.getItem('finderSession')
+    if (!raw) return null
+    try {
+      const session = JSON.parse(raw)
+      if (!session?.date) return null
+      const daysAgo = Math.floor((Date.now() - new Date(session.date).getTime()) / 86_400_000)
+      if (daysAgo > 7) return null
+      return { ...session, daysAgo, count: session.results?.length ?? 0 }
+    } catch {
+      return null
+    }
+  }
+
+  function clearFinderSession() {
+    localStorage.removeItem('finderSession')
+  }
+
   // ─── Locations ───────────────────────────────────────────────────────────────
 
   function getLocations() {
@@ -246,5 +277,6 @@ export function useStorage() {
     markReminder, saveDiagnosis,
     getWishlist, isInWishlist, addToWishlist, removeFromWishlist, moveWishlistToGarden,
     getLocations, addLocation, updateLocation, deleteLocation,
+    saveFinderSession, getFinderSession, clearFinderSession,
   };
 }
