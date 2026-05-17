@@ -150,6 +150,10 @@ Choose ONE from: indoor, balcony, window, outdoor.
 Return JSON only:
 { "spaceType": "indoor", "confidence": 95 }`
 
+// TODO: Migrate Claude API calls to relative path '/api/claude-proxy.php'
+// + add a Vite dev proxy once a staging environment exists. 6 files
+// currently hardcode the absolute plantsaathi.com URL (this one, plus
+// Diagnosis, CareTips x2, PlantIdentifier, utils/carePlan).
 async function callProxy(body, signal) {
   const res = await fetch('https://plantsaathi.com/api/claude-proxy.php', {
     method: 'POST',
@@ -215,8 +219,10 @@ export default function FindPlants() {
   // ─── Q3 (light) option-set diagnostic ────────────────────────────────────
   // Fires whenever the user lands on Q3 or the resolved space changes, so we
   // can trace whether the filtered light subset matches the detected space.
+  // Dev-only — Vite strips the whole effect body in production builds.
   useEffect(() => {
     if (currentStep !== 3) return
+    if (!import.meta.env.DEV) return
     const opts = getLightOptions(answers.spaceType)
     console.log('🎯 [Q2] Light options shown for space:', {
       detectedSpace: answers.spaceType || null,
@@ -265,7 +271,9 @@ export default function FindPlants() {
   async function handlePhoto(e) {
     const file = e.target.files?.[0]
     if (!file) return
-    console.log('📸 [1/6] Photo uploaded', { name: file.name, size: file.size, type: file.type })
+    if (import.meta.env.DEV) {
+      console.log('📸 [1/6] Photo uploaded', { name: file.name, size: file.size, type: file.type })
+    }
     if (file.size > 5 * 1024 * 1024) {
       setError('Photo too large — max 5 MB.')
       return
@@ -275,7 +283,9 @@ export default function FindPlants() {
       console.error('📸 [2/6] Base64 conversion FAILED', err)
       throw err
     })
-    console.log('📸 [2/6] Base64 conversion', { length: dataURL.length, preview: dataURL.slice(0, 100) })
+    if (import.meta.env.DEV) {
+      console.log('📸 [2/6] Base64 conversion', { length: dataURL.length, preview: dataURL.slice(0, 100) })
+    }
     setAnswers(a => ({ ...a, photo: dataURL }))
     setSpaceAutoDetected(false)   // any previous detection no longer applies
   }
@@ -298,17 +308,19 @@ export default function FindPlants() {
 
     try {
       const { mediaType, rawData } = splitDataURL(answers.photo)
-      console.log('🤖 [3/6] Sending to AI', {
-        model:      'claude-sonnet-4-20250514',
-        max_tokens: 200,
-        messages: [{
-          role: 'user',
-          content: [
-            { type: 'image', source: { type: 'base64', media_type: mediaType, data_length: rawData.length } },
-            { type: 'text',  text_length: DETECT_PROMPT.length, text_preview: DETECT_PROMPT.slice(0, 80) },
-          ],
-        }],
-      })
+      if (import.meta.env.DEV) {
+        console.log('🤖 [3/6] Sending to AI', {
+          model:      'claude-sonnet-4-20250514',
+          max_tokens: 200,
+          messages: [{
+            role: 'user',
+            content: [
+              { type: 'image', source: { type: 'base64', media_type: mediaType, data_length: rawData.length } },
+              { type: 'text',  text_length: DETECT_PROMPT.length, text_preview: DETECT_PROMPT.slice(0, 80) },
+            ],
+          }],
+        })
+      }
       const apiData = await callProxy({
         model:      'claude-sonnet-4-20250514',
         max_tokens: 200,
@@ -321,21 +333,25 @@ export default function FindPlants() {
         }],
       }, controller.signal)
 
-      console.log('🤖 [4/6] AI raw response', apiData)
+      if (import.meta.env.DEV) {
+        console.log('🤖 [4/6] AI raw response', apiData)
+      }
 
       const text   = apiData.content?.[0]?.text ?? ''
       const parsed = extractJSON(text)
       const space  = String(parsed.spaceType || '').trim().toLowerCase()
       const conf   = Number(parsed.confidence)
 
-      console.log('🤖 [5/6] Parsed space detection', {
-        rawText:    text,
-        parsed,
-        space,
-        confidence: conf,
-        validSpace: SPACE_VALUES.has(space),
-        meetsConf:  conf >= MIN_CONFIDENCE,
-      })
+      if (import.meta.env.DEV) {
+        console.log('🤖 [5/6] Parsed space detection', {
+          rawText:    text,
+          parsed,
+          space,
+          confidence: conf,
+          validSpace: SPACE_VALUES.has(space),
+          meetsConf:  conf >= MIN_CONFIDENCE,
+        })
+      }
 
       if (!SPACE_VALUES.has(space) || !(conf >= MIN_CONFIDENCE)) {
         throw new Error('low-confidence')
@@ -345,7 +361,9 @@ export default function FindPlants() {
       setPhotoSkipped(false)
       setCurrentStep(3)
     } catch (_err) {
-      console.warn('🤖 [5/6] Space detection FAILED — falling back to manual', _err)
+      if (import.meta.env.DEV) {
+        console.warn('🤖 [5/6] Space detection FAILED — falling back to manual', _err)
+      }
       setSpaceAutoDetected(false)
       setCurrentStep(2)
       showToast('Couldn’t detect space — please select manually.')
@@ -364,14 +382,16 @@ export default function FindPlants() {
     setVisibleCount(INITIAL_RESULT_COUNT)
     try {
       const slim = projectCatalogue(100)
-      console.log('🎯 [6/6] Filter input', {
-        detectedSpace:           answers.spaceType,
-        wizardAnswers:           { ...answers, photo: answers.photo ? '<base64 stripped>' : null },
-        spaceAutoDetected,
-        photoSkipped,
-        totalPlantsBeforeFilter: slim.length,
-      })
-      if (!answers.spaceType) {
+      if (import.meta.env.DEV) {
+        console.log('🎯 [6/6] Filter input', {
+          detectedSpace:           answers.spaceType,
+          wizardAnswers:           { ...answers, photo: answers.photo ? '<base64 stripped>' : null },
+          spaceAutoDetected,
+          photoSkipped,
+          totalPlantsBeforeFilter: slim.length,
+        })
+      }
+      if (import.meta.env.DEV && !answers.spaceType) {
         console.warn('⚠️ SPACE LOST — answers.spaceType is empty when matching runs', {
           answers,
           spaceAutoDetected,
@@ -379,7 +399,7 @@ export default function FindPlants() {
           currentStep,
         })
       }
-      if (answers.lightCondition && !KNOWN_LIGHT_VALUES.has(answers.lightCondition)) {
+      if (import.meta.env.DEV && answers.lightCondition && !KNOWN_LIGHT_VALUES.has(answers.lightCondition)) {
         console.warn('⚠️ Unknown lightCondition — no matching rule in LIGHT_OPTIONS:', answers.lightCondition)
       }
       const apiData = await callProxy({
@@ -394,21 +414,23 @@ export default function FindPlants() {
       const parsed = extractJSON(text)
       const recs   = (parsed.recommendations || [])
         .filter(r => r.plantId && PLANT_BY_ID.has(String(r.plantId)))
-      console.log('🎯 [6/6] Filter output', {
-        totalRecs:  recs.length,
-        firstFive:  recs.slice(0, 5).map(r => {
-          const plant = PLANT_BY_ID.get(String(r.plantId))
-          return {
-            plantId:    r.plantId,
-            name:       plant?.name,
-            locations:  plant?.locations,
-            types:      plant?.types,
-            climate:    plant?.climate,
-            matchScore: r.matchScore,
-            whyPerfect: r.whyPerfect,
-          }
-        }),
-      })
+      if (import.meta.env.DEV) {
+        console.log('🎯 [6/6] Filter output', {
+          totalRecs:  recs.length,
+          firstFive:  recs.slice(0, 5).map(r => {
+            const plant = PLANT_BY_ID.get(String(r.plantId))
+            return {
+              plantId:    r.plantId,
+              name:       plant?.name,
+              locations:  plant?.locations,
+              types:      plant?.types,
+              climate:    plant?.climate,
+              matchScore: r.matchScore,
+              whyPerfect: r.whyPerfect,
+            }
+          }),
+        })
+      }
       setResults(recs)
       // Strip photo before persisting — base64 blobs can be several MB.
       const { photo: _drop, ...answersForStorage } = answers
@@ -417,10 +439,12 @@ export default function FindPlants() {
         results:   recs,
         photoUsed: !!answers.photo,
       })
-      try {
-        console.log('💾 lastFinderSession', JSON.parse(localStorage.getItem('finderSession')))
-      } catch (logErr) {
-        console.warn('💾 lastFinderSession — could not read back', logErr)
+      if (import.meta.env.DEV) {
+        try {
+          console.log('💾 lastFinderSession', JSON.parse(localStorage.getItem('finderSession')))
+        } catch (logErr) {
+          console.warn('💾 lastFinderSession — could not read back', logErr)
+        }
       }
     } catch (err) {
       console.error('🎯 [6/6] Matching call FAILED', err)
