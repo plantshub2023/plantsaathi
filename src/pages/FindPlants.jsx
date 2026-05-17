@@ -5,13 +5,14 @@ import { plantshubCatalogue } from '../data/plantshubCatalogue.js'
 
 // ─── Wizard option lists ────────────────────────────────────────────────────
 
+// Internal space values are deliberately coarse — 4 buckets. The label can
+// be richer (e.g. "Indoor (living/bedroom)") for display, but matching and
+// per-space option filtering keys off the slug.
 const SPACE_OPTIONS = [
-  { value: 'balcony',     emoji: '🪟', label: 'Balcony'                   },
-  { value: 'indoor',      emoji: '🏠', label: 'Indoor (living/bedroom)'  },
-  { value: 'office-desk', emoji: '💼', label: 'Office desk'               },
-  { value: 'outdoor',     emoji: '🌳', label: 'Outdoor garden'            },
-  { value: 'kitchen',     emoji: '🍳', label: 'Kitchen'                   },
-  { value: 'bathroom',    emoji: '🚿', label: 'Bathroom'                  },
+  { value: 'indoor',  emoji: '🏠', label: 'Indoor (living/bedroom)' },
+  { value: 'balcony', emoji: '🪴', label: 'Balcony'                  },
+  { value: 'window',  emoji: '🪟', label: 'Window sill'              },
+  { value: 'outdoor', emoji: '🌳', label: 'Outdoor garden'           },
 ]
 const SPACE_VALUES = new Set(SPACE_OPTIONS.map(o => o.value))
 
@@ -20,9 +21,42 @@ const LIGHT_OPTIONS = [
   { value: 'bright-indirect', emoji: '🌤️', label: 'Bright indirect light'      },
   { value: 'medium',         emoji: '⛅', label: 'Medium (near window)'        },
   { value: 'low',            emoji: '🌥️', label: 'Low (away from window)'      },
-  { value: 'morning-sun',    emoji: '🪟', label: 'Morning sun only'            },
+  { value: 'morning-sun',    emoji: '🌄', label: 'Morning sun only'            },
   { value: 'afternoon-sun',  emoji: '🌅', label: 'Afternoon sun only'          },
+  { value: 'filtered',       emoji: '🪟', label: 'Filtered light (through curtain)' },
+  { value: 'partial-shade',  emoji: '🍃', label: 'Partial shade'               },
+  { value: 'mostly-shaded',  emoji: '🌑', label: 'Mostly shaded'               },
 ]
+
+// Per-space subsets shown in Q3. Order = on-screen order. Any space not
+// listed (or null) falls through to the full LIGHT_OPTIONS list.
+const LIGHT_BY_SPACE = {
+  indoor:  ['bright-indirect', 'medium', 'low', 'filtered'],
+  balcony: ['direct-sun', 'bright-indirect', 'morning-sun', 'afternoon-sun', 'mostly-shaded'],
+  window:  ['bright-indirect', 'morning-sun', 'afternoon-sun', 'medium'],
+  outdoor: ['direct-sun', 'morning-sun', 'afternoon-sun', 'bright-indirect', 'partial-shade'],
+}
+
+// The plant matching prompt only knows about the original 6 light terms.
+// New values get a parenthetical hint appended so the AI can score them.
+const LIGHT_SYNONYMS = {
+  'filtered':      'similar to medium or bright-indirect',
+  'mostly-shaded': 'similar to low',
+  'partial-shade': 'similar to bright-indirect',
+}
+const KNOWN_LIGHT_VALUES = new Set(LIGHT_OPTIONS.map(o => o.value))
+
+function getLightOptions(spaceType) {
+  const subset = LIGHT_BY_SPACE[spaceType]
+  if (!subset) return LIGHT_OPTIONS
+  const byValue = new Map(LIGHT_OPTIONS.map(o => [o.value, o]))
+  return subset.map(v => byValue.get(v)).filter(Boolean)
+}
+
+function describeLight(value) {
+  if (!value) return value
+  return LIGHT_SYNONYMS[value] ? `${value} (${LIGHT_SYNONYMS[value]})` : value
+}
 
 const MAINTENANCE_OPTIONS = [
   { value: 'low',    emoji: '🪴', label: 'Low — once a week',     desc: 'Forgiving plants that survive neglect' },
@@ -81,7 +115,7 @@ function buildMatchPrompt(user, answers, catalogueSlim) {
 User context:
 - Location: ${user.city || 'India'} (Zone ${user.zone || 'unknown'} - ${user.zoneName || 'unknown'})
 - Space: ${answers.spaceType}
-- Light: ${answers.lightCondition}
+- Light: ${describeLight(answers.lightCondition)}
 - Maintenance commitment: ${answers.maintenance}
 - Experience: ${answers.experience}
 
@@ -107,9 +141,14 @@ Sort by matchScore descending. Return 20-30 plants.`
 }
 
 const DETECT_PROMPT = `Look at this photo and identify the SPACE TYPE.
-Choose ONE from: balcony, indoor, office-desk, outdoor, kitchen, bathroom.
+Choose ONE from: indoor, balcony, window, outdoor.
+- indoor: any interior room (living, bedroom, kitchen, bathroom, office)
+- balcony: open balcony with sky access
+- window: window sill (bright but still inside)
+- outdoor: terrace, garden, rooftop, courtyard
+
 Return JSON only:
-{ "spaceType": "balcony", "confidence": 95 }`
+{ "spaceType": "indoor", "confidence": 95 }`
 
 async function callProxy(body, signal) {
   const res = await fetch('https://plantsaathi.com/api/claude-proxy.php', {
@@ -173,11 +212,26 @@ export default function FindPlants() {
     setCurrentStep(6)
   }, [searchParams])
 
+  // ─── Q3 (light) option-set diagnostic ────────────────────────────────────
+  // Fires whenever the user lands on Q3 or the resolved space changes, so we
+  // can trace whether the filtered light subset matches the detected space.
+  useEffect(() => {
+    if (currentStep !== 3) return
+    const opts = getLightOptions(answers.spaceType)
+    console.log('🎯 [Q2] Light options shown for space:', {
+      detectedSpace: answers.spaceType || null,
+      optionsShown:  opts.map(o => o.value),
+    })
+    if (!answers.spaceType) {
+      console.warn('⚠️ [Q3] No spaceType set — showing all light options')
+    }
+  }, [currentStep, answers.spaceType])
+
   // ─── Toast helper ────────────────────────────────────────────────────────
-  function showToast(msg) {
+  function showToast(msg, ms = 4000) {
     setToast(msg)
     clearTimeout(toastTimerRef.current)
-    toastTimerRef.current = setTimeout(() => setToast(null), 4000)
+    toastTimerRef.current = setTimeout(() => setToast(null), ms)
   }
 
   // ─── Step navigation ─────────────────────────────────────────────────────
@@ -189,6 +243,21 @@ export default function FindPlants() {
     setCurrentStep(s => s - 1)
   }
   function select(field, value) {
+    // Changing spaceType invalidates the previously picked lightCondition,
+    // because Q3 shows a different subset of options per space. Clear and
+    // tell the user — but only when an actual change happens and there
+    // was something to invalidate.
+    if (
+      field === 'spaceType' &&
+      answers.spaceType &&
+      answers.spaceType !== value &&
+      answers.lightCondition
+    ) {
+      const newLabel = SPACE_OPTIONS.find(o => o.value === value)?.label || value
+      showToast(`Light options updated for ${newLabel}`, 2000)
+      setAnswers(a => ({ ...a, spaceType: value, lightCondition: '' }))
+      return
+    }
     setAnswers(a => ({ ...a, [field]: value }))
   }
 
@@ -196,12 +265,17 @@ export default function FindPlants() {
   async function handlePhoto(e) {
     const file = e.target.files?.[0]
     if (!file) return
+    console.log('📸 [1/6] Photo uploaded', { name: file.name, size: file.size, type: file.type })
     if (file.size > 5 * 1024 * 1024) {
       setError('Photo too large — max 5 MB.')
       return
     }
     setError(null)
-    const dataURL = await readAsDataURL(file)
+    const dataURL = await readAsDataURL(file).catch(err => {
+      console.error('📸 [2/6] Base64 conversion FAILED', err)
+      throw err
+    })
+    console.log('📸 [2/6] Base64 conversion', { length: dataURL.length, preview: dataURL.slice(0, 100) })
     setAnswers(a => ({ ...a, photo: dataURL }))
     setSpaceAutoDetected(false)   // any previous detection no longer applies
   }
@@ -224,6 +298,17 @@ export default function FindPlants() {
 
     try {
       const { mediaType, rawData } = splitDataURL(answers.photo)
+      console.log('🤖 [3/6] Sending to AI', {
+        model:      'claude-sonnet-4-20250514',
+        max_tokens: 200,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image', source: { type: 'base64', media_type: mediaType, data_length: rawData.length } },
+            { type: 'text',  text_length: DETECT_PROMPT.length, text_preview: DETECT_PROMPT.slice(0, 80) },
+          ],
+        }],
+      })
       const apiData = await callProxy({
         model:      'claude-sonnet-4-20250514',
         max_tokens: 200,
@@ -236,10 +321,21 @@ export default function FindPlants() {
         }],
       }, controller.signal)
 
+      console.log('🤖 [4/6] AI raw response', apiData)
+
       const text   = apiData.content?.[0]?.text ?? ''
       const parsed = extractJSON(text)
       const space  = String(parsed.spaceType || '').trim().toLowerCase()
       const conf   = Number(parsed.confidence)
+
+      console.log('🤖 [5/6] Parsed space detection', {
+        rawText:    text,
+        parsed,
+        space,
+        confidence: conf,
+        validSpace: SPACE_VALUES.has(space),
+        meetsConf:  conf >= MIN_CONFIDENCE,
+      })
 
       if (!SPACE_VALUES.has(space) || !(conf >= MIN_CONFIDENCE)) {
         throw new Error('low-confidence')
@@ -249,6 +345,7 @@ export default function FindPlants() {
       setPhotoSkipped(false)
       setCurrentStep(3)
     } catch (_err) {
+      console.warn('🤖 [5/6] Space detection FAILED — falling back to manual', _err)
       setSpaceAutoDetected(false)
       setCurrentStep(2)
       showToast('Couldn’t detect space — please select manually.')
@@ -267,6 +364,24 @@ export default function FindPlants() {
     setVisibleCount(INITIAL_RESULT_COUNT)
     try {
       const slim = projectCatalogue(100)
+      console.log('🎯 [6/6] Filter input', {
+        detectedSpace:           answers.spaceType,
+        wizardAnswers:           { ...answers, photo: answers.photo ? '<base64 stripped>' : null },
+        spaceAutoDetected,
+        photoSkipped,
+        totalPlantsBeforeFilter: slim.length,
+      })
+      if (!answers.spaceType) {
+        console.warn('⚠️ SPACE LOST — answers.spaceType is empty when matching runs', {
+          answers,
+          spaceAutoDetected,
+          photoSkipped,
+          currentStep,
+        })
+      }
+      if (answers.lightCondition && !KNOWN_LIGHT_VALUES.has(answers.lightCondition)) {
+        console.warn('⚠️ Unknown lightCondition — no matching rule in LIGHT_OPTIONS:', answers.lightCondition)
+      }
       const apiData = await callProxy({
         model:      'claude-sonnet-4-20250514',
         max_tokens: 4000,
@@ -279,6 +394,21 @@ export default function FindPlants() {
       const parsed = extractJSON(text)
       const recs   = (parsed.recommendations || [])
         .filter(r => r.plantId && PLANT_BY_ID.has(String(r.plantId)))
+      console.log('🎯 [6/6] Filter output', {
+        totalRecs:  recs.length,
+        firstFive:  recs.slice(0, 5).map(r => {
+          const plant = PLANT_BY_ID.get(String(r.plantId))
+          return {
+            plantId:    r.plantId,
+            name:       plant?.name,
+            locations:  plant?.locations,
+            types:      plant?.types,
+            climate:    plant?.climate,
+            matchScore: r.matchScore,
+            whyPerfect: r.whyPerfect,
+          }
+        }),
+      })
       setResults(recs)
       // Strip photo before persisting — base64 blobs can be several MB.
       const { photo: _drop, ...answersForStorage } = answers
@@ -287,7 +417,13 @@ export default function FindPlants() {
         results:   recs,
         photoUsed: !!answers.photo,
       })
+      try {
+        console.log('💾 lastFinderSession', JSON.parse(localStorage.getItem('finderSession')))
+      } catch (logErr) {
+        console.warn('💾 lastFinderSession — could not read back', logErr)
+      }
     } catch (err) {
+      console.error('🎯 [6/6] Matching call FAILED', err)
       setError(err.message || 'Something went wrong. Please try again.')
     } finally {
       setLoadingResults(false)
@@ -1034,7 +1170,7 @@ export default function FindPlants() {
       <div key={currentStep} style={{ animation: 'findFadeIn 0.25s ease-out' }}>
         {currentStep === 1 && <StepPhoto />}
         {currentStep === 2 && StepWithGrid('spaceType',      '🏠 Where will you keep the plant?', SPACE_OPTIONS, 2)}
-        {currentStep === 3 && StepWithGrid('lightCondition', '☀️ How much light does the space get?', LIGHT_OPTIONS, 2, true)}
+        {currentStep === 3 && StepWithGrid('lightCondition', '☀️ How much light does the space get?', getLightOptions(answers.spaceType), 2, true)}
         {currentStep === 4 && StepWithList('maintenance',    '💧 How much time can you give?',    MAINTENANCE_OPTIONS)}
         {currentStep === 5 && StepWithList('experience',     '🌱 How experienced are you?',       EXPERIENCE_OPTIONS)}
       </div>
