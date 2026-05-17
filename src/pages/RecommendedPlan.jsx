@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useStorage } from '../hooks/useStorage.js'
+import usePageTitle from '../hooks/usePageTitle.js'
 import { generateCarePlan, FREQUENCY_RANGES } from '../utils/carePlan.js'
 import { REMINDER_TYPES } from '../utils/reminders.js'
 
@@ -40,6 +41,8 @@ export default function RecommendedPlan() {
   const plants = getPlants()
   const plant  = plants.find(p => p.id === plantId)
   const user   = getUser()
+
+  usePageTitle(plant?.name ? `Care Plan for ${plant.name}` : 'Care Plan')
 
   useEffect(() => {
     if (!plant) { navigate(-1); return }

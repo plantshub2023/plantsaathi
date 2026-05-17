@@ -5,8 +5,10 @@ import { toDateKey } from '../utils/reminders.js'
 import { getZoneDetails } from '../data/zones'
 import BottomNav from '../components/BottomNav'
 import CareCalendar from '../components/CareCalendar.jsx'
+import usePageTitle from '../hooks/usePageTitle'
 
 export default function Profile() {
+  usePageTitle('Profile')
   const navigate   = useNavigate()
   const { getUser, getPlants, getWishlist } = useStorage()
   const [calendarOpen, setCalendarOpen] = useState(false)

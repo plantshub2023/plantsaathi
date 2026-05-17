@@ -4,6 +4,7 @@ import { SprayCan, Sprout, RotateCw, Scissors, Flower2 } from 'lucide-react'
 import { useStorage } from '../hooks/useStorage.js'
 import { daysSince, daysUntilDue, REMINDER_TYPES } from '../utils/reminders.js'
 import { trackReminderSet } from '../utils/analytics.js'
+import usePageTitle from '../hooks/usePageTitle.js'
 import { getZoneDetails } from '../data/zones.js'
 import BottomNav from '../components/BottomNav.jsx'
 import AddLocationSheet, { LOCATION_CATEGORIES } from '../components/AddLocationSheet.jsx'
@@ -218,6 +219,8 @@ export default function CareTips() {
   const zoneDetail    = user?.zone ? getZoneDetails(user.zone) : null
   const locations     = getLocations()
   const plantLocation = plant?.locationId ? locations.find(l => l.id === plant.locationId) : null
+
+  usePageTitle(plant?.name ? `${plant.name} Care` : 'Plant Care')
 
   // Redirect if plant not found
   useEffect(() => {

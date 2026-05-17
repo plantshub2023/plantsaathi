@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useStorage } from '../hooks/useStorage'
 import { trackPlantIdentified } from '../utils/analytics'
 import BottomNav from '../components/BottomNav'
+import usePageTitle from '../hooks/usePageTitle'
 
 // ─── Resize uploaded photo before sending ─────────────────────────────────────
 function readFileAsBase64(file) {
@@ -36,6 +37,7 @@ async function toBase64(file, maxPx = 800) {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 export default function PlantIdentifier() {
+  usePageTitle('Plant Identifier')
   const navigate             = useNavigate()
   const { getUser, addPlant } = useStorage()
 

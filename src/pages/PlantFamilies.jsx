@@ -2,8 +2,10 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import BottomNav from '../components/BottomNav.jsx'
 import { plantFamilies } from '../data/plantFamilies.js'
+import usePageTitle from '../hooks/usePageTitle.js'
 
 export default function PlantFamilies() {
+  usePageTitle('Plant Families')
   const navigate = useNavigate()
   const [query, setQuery] = useState('')
 

@@ -4,6 +4,7 @@ import { useStorage } from '../hooks/useStorage.js'
 import { PLANTS } from '../data/plants.js'
 import { trackDiagnosisRun } from '../utils/analytics.js'
 import BottomNav from '../components/BottomNav.jsx'
+import usePageTitle from '../hooks/usePageTitle.js'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -38,6 +39,7 @@ function readAsDataURL(file) {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function Diagnosis() {
+  usePageTitle('AI Diagnosis')
   const navigate = useNavigate()
   const { getPlants, getUser, saveDiagnosis } = useStorage()
 

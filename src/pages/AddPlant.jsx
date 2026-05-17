@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { PLANTS } from '../data/plants.js'
 import { useStorage } from '../hooks/useStorage.js'
 import { trackPlantAdded } from '../utils/analytics.js'
+import usePageTitle from '../hooks/usePageTitle.js'
 
 // ─── Photo → base64 helper ────────────────────────────────────────────────────
 // Stage 1: FileReader reads the raw file into a base64 data URL.
@@ -43,6 +44,7 @@ async function toBase64(file, maxPx = 800) {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function AddPlant() {
+  usePageTitle('Add Plant')
   const [step,         setStep]         = useState(1)
   const [photo,        setPhoto]        = useState(null)   // base64 | null
   const [name,         setName]         = useState('')

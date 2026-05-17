@@ -4,8 +4,10 @@ import { getZone } from '../data/zones.js'
 import { searchCities } from '../data/indianCities.js'
 import { PLANTS } from '../data/plants.js'
 import { useStorage } from '../hooks/useStorage.js'
+import usePageTitle from '../hooks/usePageTitle.js'
 
 export default function Onboarding() {
+  usePageTitle('Welcome')
   const location = useLocation()
   const [step, setStep]                   = useState(location.state?.startStep ?? 1)
   const [name, setName]                   = useState('')

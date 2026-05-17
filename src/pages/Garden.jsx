@@ -7,6 +7,7 @@ import BottomNav from '../components/BottomNav.jsx'
 import CareCalendar from '../components/CareCalendar.jsx'
 import AddLocationSheet, { LOCATION_CATEGORIES } from '../components/AddLocationSheet.jsx'
 import { calculateHealthScore } from '../utils/healthScore.js'
+import usePageTitle from '../hooks/usePageTitle.js'
 
 // Sub-text rendered below the status label on each Garden plant card,
 // keyed by the status enum returned from calculateHealthScore.
@@ -108,6 +109,7 @@ function weatherEmoji(id) {
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function Garden() {
+  usePageTitle('My Garden')
   const navigate = useNavigate()
   const { getUser, saveUser, getPlants, markReminder, getLocations, addLocation } = useStorage()
 
