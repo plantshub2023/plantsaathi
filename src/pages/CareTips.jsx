@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { SprayCan, Sprout, RotateCw, Scissors, Flower2 } from 'lucide-react'
 import { useStorage } from '../hooks/useStorage.js'
 import { daysSince, daysUntilDue, REMINDER_TYPES } from '../utils/reminders.js'
+import { trackReminderSet } from '../utils/analytics.js'
 import { getZoneDetails } from '../data/zones.js'
 import BottomNav from '../components/BottomNav.jsx'
 import AddLocationSheet, { LOCATION_CATEGORIES } from '../components/AddLocationSheet.jsx'
@@ -447,6 +448,8 @@ Give care tips in this exact JSON format only:
     })
     setTick(t => t + 1)
     if (current.enabled && expandedReminder === type) setExpandedReminder(null)
+    // Analytics: only fire on enable (off→on). `type` is an enum from REMINDER_TYPES.
+    if (!current.enabled) trackReminderSet(type)
   }
 
   function handleFrequencyChange(type, delta) {

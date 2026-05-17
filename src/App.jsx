@@ -13,6 +13,7 @@ import LocationDetail from './pages/LocationDetail'
 import RecommendedPlan from './pages/RecommendedPlan'
 import PlantFamilies from './pages/PlantFamilies'
 import FindPlants from './pages/FindPlants'
+import RouteTracker from './components/RouteTracker'
 
 function RequireUser({ children }) {
   const user = localStorage.getItem('user')
@@ -22,6 +23,7 @@ function RequireUser({ children }) {
 export default function App() {
   return (
     <BrowserRouter>
+      <RouteTracker />
       <div className="app-shell">
         <Routes>
           <Route path="/onboarding" element={<Onboarding />} />
