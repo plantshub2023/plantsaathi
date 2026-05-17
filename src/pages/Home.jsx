@@ -498,29 +498,27 @@ export default function Home() {
           Find Plants for My Space
         </div>
         <div style={{ fontSize: '12px', opacity: 0.9, marginTop: '4px', lineHeight: 1.5 }}>
-          AI will suggest plants based on your space and care preferences
+          AI suggests plants based on your space and care preferences
         </div>
       </button>
       {finderSession && (
         <button
           onClick={() => navigate('/find-plants?session=last')}
           style={{
-            display:    'block',
-            width:      'calc(100% - 32px)',
-            margin:     '6px 16px 0',
-            padding:    '8px 12px',
-            background: '#fff',
-            border:     '1px solid #E0E0E0',
-            borderRadius: '12px',
-            cursor:     'pointer',
-            fontSize:   '12px',
-            color:      '#1D9E75',
-            fontWeight: 600,
-            textAlign:  'left',
-            fontFamily: 'var(--font-body)',
+            display:      'inline-block',
+            margin:       '8px 16px 0',
+            padding:      '6px 14px',
+            background:   '#fff',
+            border:       '1.5px solid #1D9E75',
+            color:        '#1D9E75',
+            borderRadius: '20px',
+            cursor:       'pointer',
+            fontSize:     '12px',
+            fontWeight:   600,
+            fontFamily:   'var(--font-body)',
           }}
         >
-          ↩ View your last results
+          📋 View your last results →
           <span style={{ color: '#888', fontWeight: 400, marginLeft: '6px' }}>
             ({finderSession.daysAgo === 0 ? 'today' : `${finderSession.daysAgo}d ago`}
             {finderSession.count ? ` · ${finderSession.count} plants` : ''})

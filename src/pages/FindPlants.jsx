@@ -6,13 +6,14 @@ import { plantshubCatalogue } from '../data/plantshubCatalogue.js'
 // ─── Wizard option lists ────────────────────────────────────────────────────
 
 const SPACE_OPTIONS = [
-  { value: 'balcony',      emoji: '🪟', label: 'Balcony'                    },
-  { value: 'indoor',       emoji: '🏠', label: 'Indoor (living/bedroom)'   },
-  { value: 'office-desk',  emoji: '💼', label: 'Office desk'                },
-  { value: 'outdoor',      emoji: '🌳', label: 'Outdoor garden'             },
-  { value: 'kitchen',      emoji: '🍳', label: 'Kitchen'                    },
-  { value: 'bathroom',     emoji: '🚿', label: 'Bathroom'                   },
+  { value: 'balcony',     emoji: '🪟', label: 'Balcony'                   },
+  { value: 'indoor',      emoji: '🏠', label: 'Indoor (living/bedroom)'  },
+  { value: 'office-desk', emoji: '💼', label: 'Office desk'               },
+  { value: 'outdoor',     emoji: '🌳', label: 'Outdoor garden'            },
+  { value: 'kitchen',     emoji: '🍳', label: 'Kitchen'                   },
+  { value: 'bathroom',    emoji: '🚿', label: 'Bathroom'                  },
 ]
+const SPACE_VALUES = new Set(SPACE_OPTIONS.map(o => o.value))
 
 const LIGHT_OPTIONS = [
   { value: 'direct-sun',     emoji: '☀️', label: 'Direct sunlight (4–6+ hrs)' },
@@ -30,14 +31,15 @@ const MAINTENANCE_OPTIONS = [
 ]
 
 const EXPERIENCE_OPTIONS = [
-  { value: 'beginner',  emoji: '🌱',  label: 'Beginner — first plant'             },
-  { value: 'some',      emoji: '🌿',  label: 'Some experience — killed a few'      },
-  { value: 'pro',       emoji: '🧑‍🌾', label: 'Pro gardener — many years'         },
+  { value: 'beginner', emoji: '🌱',  label: 'Beginner — first plant'         },
+  { value: 'some',     emoji: '🌿',  label: 'Some experience — killed a few' },
+  { value: 'pro',      emoji: '🧑‍🌾', label: 'Pro gardener — many years'      },
 ]
 
-const TOTAL_STEPS = 5
 const INITIAL_RESULT_COUNT = 10
 const RESULT_PAGE_SIZE     = 15
+const DETECT_TIMEOUT_MS    = 30_000   // spec says 3s but vision calls need ~5–15s
+const MIN_CONFIDENCE       = 70
 
 // Indexed lookup so the results page can hydrate AI ids back to full records.
 const PLANT_BY_ID = new Map(plantshubCatalogue.map(p => [p.id, p]))
@@ -53,8 +55,14 @@ function readAsDataURL(file) {
   })
 }
 
+function splitDataURL(dataURL) {
+  const [meta, rawData] = dataURL.split(',')
+  const mediaType = meta.match(/:(.*?);/)?.[1] ?? 'image/jpeg'
+  return { mediaType, rawData }
+}
+
 // Project to the minimum fields the AI needs to pick matches — drops images,
-// URLs, prices, etc. so the prompt stays compact even at 100 plants.
+// URLs, prices, etc. so the prompt stays compact at 100 plants.
 function projectCatalogue(limit = 100) {
   return plantshubCatalogue.slice(0, limit).map(p => ({
     id:        p.id,
@@ -67,8 +75,7 @@ function projectCatalogue(limit = 100) {
   }))
 }
 
-function buildPromptText(user, answers, catalogueSlim) {
-  const photoLine = answers.photo ? '- Photo provided of their space\n' : ''
+function buildMatchPrompt(user, answers, catalogueSlim) {
   return `You are a plant expert helping Indian users choose plants.
 
 User context:
@@ -77,19 +84,17 @@ User context:
 - Light: ${answers.lightCondition}
 - Maintenance commitment: ${answers.maintenance}
 - Experience: ${answers.experience}
-${photoLine}
-Available plants in Plantshub catalogue:
+
+Available plants from Plantshub catalogue:
 ${JSON.stringify(catalogueSlim)}
 (showing top ${catalogueSlim.length}, total ${plantshubCatalogue.length} plants)
 
 Task:
-1. Pick 20-30 plants from the catalogue that match user's needs
+1. Pick 20-30 best matching plants for this user
 2. Prioritize plants suitable for user's climate zone
-3. Match space requirements (indoor/balcony/etc)
-4. Consider light needs
-5. Match maintenance level to user experience
-6. For beginners, prefer hardy plants
-7. For experts, can include challenging plants
+3. Match space + light requirements
+4. Match maintenance level to user experience
+5. For beginners, prefer hardy plants; for experts, can suggest challenging ones
 
 Return JSON only (no commentary), with this exact shape:
 {
@@ -98,7 +103,32 @@ Return JSON only (no commentary), with this exact shape:
   ]
 }
 
-Return 20-30 recommendations sorted by matchScore descending.`
+Sort by matchScore descending. Return 20-30 plants.`
+}
+
+const DETECT_PROMPT = `Look at this photo and identify the SPACE TYPE.
+Choose ONE from: balcony, indoor, office-desk, outdoor, kitchen, bathroom.
+Return JSON only:
+{ "spaceType": "balcony", "confidence": 95 }`
+
+async function callProxy(body, signal) {
+  const res = await fetch('https://plantsaathi.com/api/claude-proxy.php', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+    signal,
+  })
+  if (!res.ok) {
+    const errBody = await res.json().catch(() => ({}))
+    throw new Error(errBody.error?.message ?? `API error ${res.status}`)
+  }
+  return res.json()
+}
+
+function extractJSON(text) {
+  const match = text.match(/\{[\s\S]*\}/)
+  if (!match) throw new Error('No JSON in AI response')
+  return JSON.parse(match[0])
 }
 
 // ─── Component ──────────────────────────────────────────────────────────────
@@ -109,7 +139,18 @@ export default function FindPlants() {
   const { getUser, getFinderSession, saveFinderSession, clearFinderSession } = useStorage()
   const user = getUser()
 
-  const [currentStep, setCurrentStep] = useState(1)
+  const [currentStep,       setCurrentStep]       = useState(1)
+  const [photoSkipped,      setPhotoSkipped]      = useState(false)
+  const [spaceAutoDetected, setSpaceAutoDetected] = useState(false)
+  const [detectingSpace,    setDetectingSpace]    = useState(false)
+  const [loadingResults,    setLoadingResults]    = useState(false)
+  const [error,             setError]             = useState(null)
+  const [toast,             setToast]             = useState(null)
+  const [results,           setResults]           = useState(null)
+  const [fromSavedSession,  setFromSavedSession]  = useState(false)
+  const [stockFilter,       setStockFilter]       = useState('all')
+  const [visibleCount,      setVisibleCount]      = useState(INITIAL_RESULT_COUNT)
+
   const [answers, setAnswers] = useState({
     photo:           null,
     spaceType:       '',
@@ -117,40 +158,41 @@ export default function FindPlants() {
     maintenance:     '',
     experience:      '',
   })
-  const [loading, setLoading] = useState(false)
-  const [error,   setError]   = useState(null)
-  const [results, setResults] = useState(null)   // null | array of {plantId, matchScore, whyPerfect}
-  const [savedAnswers, setSavedAnswers] = useState(null)  // for "view last session"
-  const [stockFilter, setStockFilter]   = useState('all')
-  const [visibleCount, setVisibleCount] = useState(INITIAL_RESULT_COUNT)
 
   const photoInputRef = useRef(null)
+  const toastTimerRef = useRef(null)
 
-  // ─── Load saved session if ?session=last ────────────────────────────────
+  // ─── Saved session ───────────────────────────────────────────────────────
   useEffect(() => {
     if (searchParams.get('session') !== 'last') return
     const s = getFinderSession()
     if (!s) return
-    setSavedAnswers(s.answers)
-    setAnswers(s.answers)
-    setResults(s.results)
+    setAnswers(s.answers || {})
+    setResults(s.results || [])
+    setFromSavedSession(true)
+    setCurrentStep(6)
   }, [searchParams])
+
+  // ─── Toast helper ────────────────────────────────────────────────────────
+  function showToast(msg) {
+    setToast(msg)
+    clearTimeout(toastTimerRef.current)
+    toastTimerRef.current = setTimeout(() => setToast(null), 4000)
+  }
 
   // ─── Step navigation ─────────────────────────────────────────────────────
   function back() {
     setError(null)
     if (currentStep === 1) { navigate(-1); return }
+    if (currentStep === 2) { setCurrentStep(1); return }
+    if (currentStep === 3 && spaceAutoDetected) { setCurrentStep(1); return }
     setCurrentStep(s => s - 1)
-  }
-  function next() {
-    setError(null)
-    setCurrentStep(s => Math.min(s + 1, TOTAL_STEPS))
   }
   function select(field, value) {
     setAnswers(a => ({ ...a, [field]: value }))
   }
 
-  // ─── Photo handler ───────────────────────────────────────────────────────
+  // ─── Photo handlers ──────────────────────────────────────────────────────
   async function handlePhoto(e) {
     const file = e.target.files?.[0]
     if (!file) return
@@ -158,82 +200,117 @@ export default function FindPlants() {
       setError('Photo too large — max 5 MB.')
       return
     }
+    setError(null)
     const dataURL = await readAsDataURL(file)
     setAnswers(a => ({ ...a, photo: dataURL }))
+    setSpaceAutoDetected(false)   // any previous detection no longer applies
   }
 
-  // ─── AI submit ───────────────────────────────────────────────────────────
-  async function submit() {
-    setLoading(true)
-    setError(null)
-    setResults(null)
-    try {
-      const content = []
-      if (answers.photo) {
-        const [meta, rawData] = answers.photo.split(',')
-        const mediaType = meta.match(/:(.*?);/)?.[1] ?? 'image/jpeg'
-        content.push({
-          type: 'image',
-          source: { type: 'base64', media_type: mediaType, data: rawData },
-        })
-      }
-      const slim = projectCatalogue(100)
-      content.push({ type: 'text', text: buildPromptText(user || {}, answers, slim) })
+  function skipPhoto() {
+    setPhotoSkipped(true)
+    setSpaceAutoDetected(false)
+    setAnswers(a => ({ ...a, photo: null }))
+    setCurrentStep(2)
+  }
 
-      const res = await fetch('https://plantsaathi.com/api/claude-proxy.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model:      'claude-sonnet-4-20250514',
-          max_tokens: 4000,
-          messages:   [{ role: 'user', content }],
-        }),
-      })
-      if (!res.ok) {
-        const errBody = await res.json().catch(() => ({}))
-        throw new Error(errBody.error?.message ?? `API error ${res.status}`)
+  // ─── Space detection ─────────────────────────────────────────────────────
+  async function continueWithPhoto() {
+    if (!answers.photo) return
+    setDetectingSpace(true)
+    setError(null)
+
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), DETECT_TIMEOUT_MS)
+
+    try {
+      const { mediaType, rawData } = splitDataURL(answers.photo)
+      const apiData = await callProxy({
+        model:      'claude-sonnet-4-20250514',
+        max_tokens: 200,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image', source: { type: 'base64', media_type: mediaType, data: rawData } },
+            { type: 'text',  text: DETECT_PROMPT },
+          ],
+        }],
+      }, controller.signal)
+
+      const text   = apiData.content?.[0]?.text ?? ''
+      const parsed = extractJSON(text)
+      const space  = String(parsed.spaceType || '').trim().toLowerCase()
+      const conf   = Number(parsed.confidence)
+
+      if (!SPACE_VALUES.has(space) || !(conf >= MIN_CONFIDENCE)) {
+        throw new Error('low-confidence')
       }
-      const apiData   = await res.json()
-      const rawText   = apiData.content?.[0]?.text ?? ''
-      const jsonMatch = rawText.match(/\{[\s\S]*\}/)
-      if (!jsonMatch) throw new Error('Could not parse AI response — please try again')
-      const parsed = JSON.parse(jsonMatch[0])
-      const recs   = (parsed.recommendations || [])
-        .filter(r => r.plantId && PLANT_BY_ID.has(String(r.plantId)))
-      setResults(recs)
-      setVisibleCount(INITIAL_RESULT_COUNT)
-      // Strip photo before persisting — base64 blobs can be several MB and
-      // localStorage is capped around 5–10 MB across all keys.
-      const { photo: _drop, ...answersForStorage } = answers
-      saveFinderSession({ answers: { ...answersForStorage, photo: null }, results: recs })
-    } catch (err) {
-      setError(err.message || 'Something went wrong. Please try again.')
+      setAnswers(a => ({ ...a, spaceType: space }))
+      setSpaceAutoDetected(true)
+      setPhotoSkipped(false)
+      setCurrentStep(3)
+    } catch (_err) {
+      setSpaceAutoDetected(false)
+      setCurrentStep(2)
+      showToast('Couldn’t detect space — please select manually.')
     } finally {
-      setLoading(false)
+      clearTimeout(timer)
+      setDetectingSpace(false)
     }
   }
 
-  // Auto-fire submit when wizard finishes (step 5 → Continue moves into
-  // submit, which sets loading then results). Triggered by `kickOff` flag.
-  function finish() {
-    submit()
+  // ─── Plant matching ──────────────────────────────────────────────────────
+  async function submit() {
+    setLoadingResults(true)
+    setCurrentStep(6)
+    setError(null)
+    setResults(null)
+    setVisibleCount(INITIAL_RESULT_COUNT)
+    try {
+      const slim = projectCatalogue(100)
+      const apiData = await callProxy({
+        model:      'claude-sonnet-4-20250514',
+        max_tokens: 4000,
+        messages: [{
+          role:    'user',
+          content: buildMatchPrompt(user || {}, answers, slim),
+        }],
+      })
+      const text   = apiData.content?.[0]?.text ?? ''
+      const parsed = extractJSON(text)
+      const recs   = (parsed.recommendations || [])
+        .filter(r => r.plantId && PLANT_BY_ID.has(String(r.plantId)))
+      setResults(recs)
+      // Strip photo before persisting — base64 blobs can be several MB.
+      const { photo: _drop, ...answersForStorage } = answers
+      saveFinderSession({
+        answers:   { ...answersForStorage, photo: null },
+        results:   recs,
+        photoUsed: !!answers.photo,
+      })
+    } catch (err) {
+      setError(err.message || 'Something went wrong. Please try again.')
+    } finally {
+      setLoadingResults(false)
+    }
   }
 
   function startOver() {
     clearFinderSession()
-    setSavedAnswers(null)
-    setResults(null)
     setAnswers({ photo: null, spaceType: '', lightCondition: '', maintenance: '', experience: '' })
-    setCurrentStep(1)
+    setPhotoSkipped(false)
+    setSpaceAutoDetected(false)
+    setResults(null)
+    setFromSavedSession(false)
     setError(null)
+    setCurrentStep(1)
   }
 
-  // ─── Shared styles ───────────────────────────────────────────────────────
+  // ─── Shared style tokens ─────────────────────────────────────────────────
   const page = {
-    minHeight:  '100svh',
-    background: '#f0ede6',
-    fontFamily: 'var(--font-body)',
-    color:      'var(--text)',
+    minHeight:     '100svh',
+    background:    '#f0ede6',
+    fontFamily:    'var(--font-body)',
+    color:         'var(--text)',
     paddingBottom: '120px',
   }
   const stickyHeader = {
@@ -338,19 +415,28 @@ export default function FindPlants() {
   })
 
   // ─── Progress dots ───────────────────────────────────────────────────────
+  // 4 dots when AI detected the space (Photo → Light → Maintenance → Experience).
+  // 5 dots when the user must pick a space manually.
+  const condensedFlow = spaceAutoDetected && !photoSkipped
+  const dotsCount     = condensedFlow ? 4 : 5
+  const displayStep   = condensedFlow
+    ? (currentStep <= 1 ? 1 : currentStep - 1)
+    : currentStep
+
   function ProgressDots() {
     return (
       <div style={{
-        display:    'flex',
-        gap:        '6px',
-        padding:    '12px 16px',
-        background: '#fff',
-        borderBottom: '1px solid #eee',
+        display:        'flex',
+        gap:            '6px',
+        padding:        '12px 16px',
+        background:     '#fff',
+        borderBottom:   '1px solid #eee',
+        justifyContent: 'center',
       }}>
-        {Array.from({ length: TOTAL_STEPS }, (_, i) => {
-          const n = i + 1
-          const active   = n === currentStep
-          const done     = n <  currentStep
+        {Array.from({ length: dotsCount }, (_, i) => {
+          const n      = i + 1
+          const active = n === displayStep
+          const done   = n <  displayStep
           return (
             <div key={n} style={{
               width:        active ? '30px' : '8px',
@@ -365,7 +451,7 @@ export default function FindPlants() {
     )
   }
 
-  // ─── Option grid (steps 2 & 3) ───────────────────────────────────────────
+  // ─── Option grids ────────────────────────────────────────────────────────
   function OptionGrid({ field, options, columns = 2 }) {
     return (
       <div style={{
@@ -387,8 +473,6 @@ export default function FindPlants() {
       </div>
     )
   }
-
-  // ─── Option list with descriptions (step 4) ──────────────────────────────
   function OptionListDesc({ field, options }) {
     return (
       <div style={{
@@ -414,12 +498,7 @@ export default function FindPlants() {
             <div style={{ flex: 1 }}>
               <div style={{ ...optionLabel, fontSize: '14px' }}>{o.label}</div>
               {o.desc && (
-                <div style={{
-                  fontSize:   '11px',
-                  color:      '#888',
-                  marginTop:  '4px',
-                  lineHeight: 1.4,
-                }}>
+                <div style={{ fontSize: '11px', color: '#888', marginTop: '4px', lineHeight: 1.4 }}>
                   {o.desc}
                 </div>
               )}
@@ -437,7 +516,7 @@ export default function FindPlants() {
     return (
       <>
         <h1 style={questionH}>📸 Show me your space</h1>
-        <p style={subtitle}>Upload a photo so AI can analyze light and space (optional)</p>
+        <p style={subtitle}>Upload a photo to auto-detect your space type (optional)</p>
         <div
           onClick={() => photoInputRef.current?.click()}
           style={{
@@ -463,31 +542,17 @@ export default function FindPlants() {
                   display:      'block',
                 }}
               />
-              <div style={{
-                fontSize:  '13px',
-                color:     '#1D9E75',
-                marginTop: '10px',
-                fontWeight: 600,
-              }}>
+              <div style={{ fontSize: '13px', color: '#1D9E75', marginTop: '10px', fontWeight: 600 }}>
                 📷 Change photo
               </div>
             </>
           ) : (
             <>
               <div style={{ fontSize: '48px', lineHeight: 1 }}>📷</div>
-              <div style={{
-                fontSize:   '14px',
-                color:      '#1D9E75',
-                marginTop:  '12px',
-                fontWeight: 600,
-              }}>
+              <div style={{ fontSize: '14px', color: '#1D9E75', marginTop: '12px', fontWeight: 600 }}>
                 Tap to upload or take photo
               </div>
-              <div style={{
-                fontSize:  '11px',
-                color:     '#888',
-                marginTop: '4px',
-              }}>
+              <div style={{ fontSize: '11px', color: '#888', marginTop: '4px' }}>
                 JPG, PNG, max 5 MB
               </div>
             </>
@@ -502,17 +567,48 @@ export default function FindPlants() {
           style={{ display: 'none' }}
         />
         <div style={footer}>
-          <button style={btnSecondary} onClick={next}>Skip</button>
-          <button style={btnPrimary(true)} onClick={next}>Continue →</button>
+          <button style={btnSecondary} onClick={skipPhoto}>Skip</button>
+          <button
+            style={btnPrimary(hasPhoto)}
+            disabled={!hasPhoto}
+            onClick={continueWithPhoto}
+          >
+            Continue →
+          </button>
         </div>
       </>
     )
   }
 
-  function StepWithGrid(field, title, options, columns = 2) {
+  function DetectionChip() {
+    if (!spaceAutoDetected) return null
+    const label = SPACE_OPTIONS.find(o => o.value === answers.spaceType)?.label
+                  || answers.spaceType
+    return (
+      <div
+        onClick={() => { setSpaceAutoDetected(false); setCurrentStep(2) }}
+        style={{
+          display:      'inline-block',
+          background:   '#E8F5F0',
+          color:        '#1D9E75',
+          borderRadius: '16px',
+          padding:      '6px 12px',
+          fontSize:     '12px',
+          fontWeight:   600,
+          cursor:       'pointer',
+          margin:       '12px 0 0 16px',
+        }}
+      >
+        📍 Detected: {label} ✏️
+      </div>
+    )
+  }
+
+  function StepWithGrid(field, title, options, columns = 2, showChip = false) {
     const enabled = !!answers[field]
     return (
       <>
+        {showChip && <DetectionChip />}
         <h1 style={questionH}>{title}</h1>
         <OptionGrid field={field} options={options} columns={columns} />
         <div style={footer}>
@@ -520,9 +616,9 @@ export default function FindPlants() {
           <button
             style={btnPrimary(enabled)}
             disabled={!enabled}
-            onClick={currentStep === TOTAL_STEPS ? finish : next}
+            onClick={currentStep === 5 ? submit : () => setCurrentStep(s => s + 1)}
           >
-            {currentStep === TOTAL_STEPS ? '✨ Find my plants' : 'Continue →'}
+            {currentStep === 5 ? '✨ Find my plants' : 'Continue →'}
           </button>
         </div>
       </>
@@ -540,17 +636,17 @@ export default function FindPlants() {
           <button
             style={btnPrimary(enabled)}
             disabled={!enabled}
-            onClick={currentStep === TOTAL_STEPS ? finish : next}
+            onClick={currentStep === 5 ? submit : () => setCurrentStep(s => s + 1)}
           >
-            {currentStep === TOTAL_STEPS ? '✨ Find my plants' : 'Continue →'}
+            {currentStep === 5 ? '✨ Find my plants' : 'Continue →'}
           </button>
         </div>
       </>
     )
   }
 
-  // ─── Loading screen ──────────────────────────────────────────────────────
-  function LoadingScreen() {
+  // ─── Loading screens ─────────────────────────────────────────────────────
+  function FullScreenLoader({ emoji, title, sub }) {
     return (
       <div style={{
         minHeight:      '100svh',
@@ -573,24 +669,19 @@ export default function FindPlants() {
           lineHeight:  1,
           animation:   'findPulse 1.4s ease-in-out infinite',
         }}>
-          🔮
+          {emoji}
         </div>
-        <div style={{
-          fontSize:   '16px',
-          color:      '#1D9E75',
-          marginTop:  '20px',
-          fontWeight: 600,
-        }}>
-          Finding perfect plants for you…
+        <div style={{ fontSize: '16px', color: '#1D9E75', marginTop: '20px', fontWeight: 600 }}>
+          {title}
         </div>
         <div style={{
           fontSize:  '12px',
           color:     '#888',
           marginTop: '4px',
           lineHeight: 1.5,
-          maxWidth:  '260px',
+          maxWidth:  '280px',
         }}>
-          Analyzing your space, light, climate, and care needs
+          {sub}
         </div>
       </div>
     )
@@ -598,7 +689,6 @@ export default function FindPlants() {
 
   // ─── Results page ────────────────────────────────────────────────────────
   function ResultsPage() {
-    // Hydrate AI ids → full plant records, drop unknown ids.
     const hydrated = useMemo(() => {
       if (!results) return []
       return results
@@ -614,11 +704,11 @@ export default function FindPlants() {
     const filtered = hydrated.filter(r =>
       stockFilter === 'all'         ? true
     : stockFilter === 'in-stock'    ? r.plant.inStock
-    : !r.plant.inStock
+    :                                 !r.plant.inStock
     )
-    const visible    = filtered.slice(0, visibleCount)
-    const hasMore    = visible.length < filtered.length
-    const nextChunk  = Math.min(RESULT_PAGE_SIZE, filtered.length - visible.length)
+    const visible   = filtered.slice(0, visibleCount)
+    const hasMore   = visible.length < filtered.length
+    const nextChunk = Math.min(RESULT_PAGE_SIZE, filtered.length - visible.length)
 
     if (hydrated.length === 0) {
       return (
@@ -643,12 +733,7 @@ export default function FindPlants() {
             }}>
               Couldn't find perfect matches
             </div>
-            <div style={{
-              fontSize:   '13px',
-              color:      '#888',
-              marginTop:  '6px',
-              lineHeight: 1.5,
-            }}>
+            <div style={{ fontSize: '13px', color: '#888', marginTop: '6px', lineHeight: 1.5 }}>
               Try adjusting your preferences
             </div>
             <button
@@ -675,7 +760,6 @@ export default function FindPlants() {
 
     return (
       <div style={page}>
-        {/* Header */}
         <div style={stickyHeader}>
           <button style={headerBack} onClick={() => navigate('/home')} aria-label="Back">←</button>
           <div>
@@ -686,10 +770,9 @@ export default function FindPlants() {
           </div>
         </div>
 
-        {/* Filter chips */}
         <div style={{
           position:   'sticky',
-          top:        '60px',  // sits below header
+          top:        '60px',
           zIndex:     20,
           background: '#f0ede6',
           padding:    '12px 16px',
@@ -728,7 +811,6 @@ export default function FindPlants() {
           })}
         </div>
 
-        {/* Grid */}
         <div style={{
           padding:             '4px 16px 24px',
           display:             'grid',
@@ -743,6 +825,8 @@ export default function FindPlants() {
             <button
               onClick={() => setVisibleCount(c => c + RESULT_PAGE_SIZE)}
               style={{
+                display:      'block',
+                margin:       '0 auto',
                 background:   '#1D9E75',
                 color:        '#fff',
                 border:       'none',
@@ -759,7 +843,7 @@ export default function FindPlants() {
           </div>
         )}
 
-        {savedAnswers && (
+        {fromSavedSession && (
           <div style={{
             margin:     '0 16px 24px',
             padding:    '14px',
@@ -921,13 +1005,18 @@ export default function FindPlants() {
     )
   }
 
-  // ─── Top-level render dispatcher ─────────────────────────────────────────
+  // ─── Top-level render ────────────────────────────────────────────────────
 
-  // Results take precedence over wizard once we have them.
-  if (results) return <ResultsPage />
-  if (loading) return <LoadingScreen />
+  if (currentStep === 6) {
+    return loadingResults
+      ? <FullScreenLoader emoji="🔮" title="Finding perfect plants for you…" sub="Analyzing your space, light, climate, and care needs" />
+      : <ResultsPage />
+  }
 
-  // Wizard steps
+  if (detectingSpace) {
+    return <FullScreenLoader emoji="🔍" title="Identifying your space…" sub="AI is analyzing your photo" />
+  }
+
   return (
     <div style={page}>
       <div style={stickyHeader}>
@@ -942,16 +1031,34 @@ export default function FindPlants() {
           to   { opacity: 1; transform: translateY(0); }
         }
       `}</style>
-      <div
-        key={currentStep}
-        style={{ animation: 'findFadeIn 0.25s ease-out' }}
-      >
+      <div key={currentStep} style={{ animation: 'findFadeIn 0.25s ease-out' }}>
         {currentStep === 1 && <StepPhoto />}
         {currentStep === 2 && StepWithGrid('spaceType',      '🏠 Where will you keep the plant?', SPACE_OPTIONS, 2)}
-        {currentStep === 3 && StepWithGrid('lightCondition', '☀️ How much light does the space get?', LIGHT_OPTIONS, 2)}
+        {currentStep === 3 && StepWithGrid('lightCondition', '☀️ How much light does the space get?', LIGHT_OPTIONS, 2, true)}
         {currentStep === 4 && StepWithList('maintenance',    '💧 How much time can you give?',    MAINTENANCE_OPTIONS)}
         {currentStep === 5 && StepWithList('experience',     '🌱 How experienced are you?',       EXPERIENCE_OPTIONS)}
       </div>
+
+      {toast && (
+        <div style={{
+          position:     'fixed',
+          top:          '76px',
+          left:         '50%',
+          transform:    'translateX(-50%)',
+          background:   '#1a1a1a',
+          color:        '#fff',
+          padding:      '10px 14px',
+          borderRadius: '12px',
+          fontSize:     '12px',
+          fontWeight:   500,
+          zIndex:       40,
+          maxWidth:     '320px',
+          textAlign:    'center',
+          boxShadow:    '0 4px 16px rgba(0,0,0,0.18)',
+        }}>
+          {toast}
+        </div>
+      )}
 
       {error && (
         <div style={{
