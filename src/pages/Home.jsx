@@ -7,10 +7,12 @@ import { plantFamilies } from '../data/plantFamilies.js'
 
 // ─── Static section data ────────────────────────────────────────────────────
 
-// Codes shown first on Home — the nine most common Indian zones by
-// city count (Z16=95, Z7=43, Z11=42, Z13=40, Z18=28, Z14=27, Z1=23,
-// Z12=18, Z2=16). Remaining climates surface via "View all zones".
-const TOP_CLIMATE_CODES = ['Z16', 'Z7', 'Z11', 'Z13', 'Z18', 'Z14', 'Z1', 'Z12', 'Z2']
+// Codes shown first on Home — the nine most common Indian zones,
+// rendered in climate order (Cold → Subtropical → Tropical) so the
+// grid reads top-down from coolest to hottest. Remaining climates
+// surface via "View all zones". "Your zone" highlighting is keyed
+// off `user.zone` and works wherever the user's code lands in the list.
+const TOP_CLIMATE_CODES = ['Z1', 'Z2', 'Z7', 'Z16', 'Z11', 'Z12', 'Z13', 'Z14', 'Z18']
 
 const LOCATIONS = [
   { slug: 'indoor',      emoji: '🏠', label: 'Indoor'      },
@@ -44,7 +46,7 @@ const TRENDING = [
   { slug: 'aromatic',          emoji: '🌶️', label: 'Aromatic'     },
 ]
 
-const VISIBLE_FAMILY_COUNT = 15
+const VISIBLE_FAMILY_COUNT = 3
 
 // ─── Shared style fragments ─────────────────────────────────────────────────
 
@@ -417,28 +419,12 @@ export default function Home() {
             <span style={{ fontSize: '10px', color: '#888', opacity: 0.7 }}>({f.count})</span>
           </button>
         ))}
-        <button
-          onClick={() => navigate('/catalogue/families')}
-          style={{
-            background:    '#E8F5F0',
-            border:        'none',
-            borderRadius:  '24px',
-            padding:       '7px 14px',
-            cursor:        'pointer',
-            fontSize:      '12px',
-            fontWeight:    600,
-            color:         '#1D9E75',
-            whiteSpace:    'nowrap',
-            flexShrink:    0,
-            minWidth:      'fit-content',
-            fontFamily:    'var(--font-body)',
-          }}
-        >
-          View all →
-        </button>
         {/* trailing spacer so last chip has breathing room */}
         <div style={{ width: '16px', flexShrink: 0 }} />
       </div>
+      <button onClick={() => navigate('/plant-families')} style={viewAllLink}>
+        View all plant families →
+      </button>
 
       {/* Section 3 — Plants by Location */}
       <div style={sectionTitle}>📍 Plants by Location</div>
