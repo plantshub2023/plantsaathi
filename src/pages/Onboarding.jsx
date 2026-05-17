@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { ZONES, getZone } from '../data/zones.js'
+import { getZone } from '../data/zones.js'
+import { searchCities } from '../data/indianCities.js'
 import { PLANTS } from '../data/plants.js'
 import { useStorage } from '../hooks/useStorage.js'
 
@@ -26,24 +27,32 @@ export default function Onboarding() {
   const { saveUser } = useStorage()
 
   // ─── City autocomplete ──────────────────────────────────────────────────────
+  // Suggestions come from the 418-entry indianCities catalogue. Each match
+  // is a { name, zone, zoneName, maxTemp } object. Picking one fills the
+  // user's zone automatically; if nothing matches the typed query the user
+  // can fall back to GPS or save a custom (zone-less) city.
 
-  const allCities = Object.keys(ZONES)
+  const suggestions = citySearch.length > 0 ? searchCities(citySearch, 10) : []
+  const noMatches   = citySearch.trim().length > 0 && suggestions.length === 0
 
-  const suggestions = citySearch.length > 0
-    ? (() => {
-        const q  = citySearch.toLowerCase()
-        const sw = allCities.filter(c => c.toLowerCase().startsWith(q))
-        const inc = allCities.filter(
-          c => !c.toLowerCase().startsWith(q) && c.toLowerCase().includes(q)
-        )
-        return [...sw, ...inc].slice(0, 7)
-      })()
-    : []
+  function handleCitySelect(match) {
+    // match = { name, zone, zoneName, maxTemp: '≤48°C' }
+    const peakMatch = match.maxTemp.match(/\d+/)
+    const peakTemp  = peakMatch ? parseInt(peakMatch[0], 10) : null
+    setCity(match.name)
+    setCitySearch(match.name)
+    setZone([match.zone, match.zoneName, peakTemp])
+    setShowDropdown(false)
+  }
 
-  function handleCitySelect(selected) {
-    setCity(selected)
-    setCitySearch(selected)
-    setZone(ZONES[selected])
+  // Save the typed string as the user's city without any zone assignment —
+  // they opt out of climate-tailored care tips in exchange for using a name
+  // not in the catalogue.
+  function handleCustomCity() {
+    const trimmed = citySearch.trim()
+    if (!trimmed) return
+    setCity(trimmed)
+    setZone(null)
     setShowDropdown(false)
   }
 
@@ -422,7 +431,7 @@ export default function Onboarding() {
               <input
                 style={{
                   ...inputStyle(inputFocused),
-                  borderRadius: (showDropdown && suggestions.length > 0)
+                  borderRadius: (showDropdown && (suggestions.length > 0 || noMatches))
                     ? '12px 12px 0 0'
                     : '12px',
                 }}
@@ -454,27 +463,92 @@ export default function Onboarding() {
                   borderTop: 'none',
                   borderRadius: '0 0 12px 12px',
                   zIndex: 20,
-                  maxHeight: '210px',
+                  maxHeight: '320px',
                   overflowY: 'auto',
                   boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
                 }}>
                   {suggestions.map((c, i) => (
                     <div
-                      key={c}
+                      key={c.name}
                       onMouseDown={e => { e.preventDefault(); handleCitySelect(c) }}
                       style={{
-                        padding: '13px 16px',
-                        fontSize: '15px',
-                        cursor: 'pointer',
-                        color: 'var(--text)',
+                        padding:      '12px 16px',
+                        cursor:       'pointer',
+                        color:        'var(--text)',
                         borderBottom: i < suggestions.length - 1
                           ? '1px solid var(--border)'
                           : 'none',
                       }}
                     >
-                      {c}
+                      <div style={{ fontSize: '15px', fontWeight: 500 }}>
+                        {c.name}
+                      </div>
+                      <div style={{
+                        fontSize:  '12px',
+                        color:     'var(--muted)',
+                        marginTop: '2px',
+                      }}>
+                        {c.zone} · {c.zoneName} ({c.maxTemp})
+                      </div>
                     </div>
                   ))}
+                </div>
+              )}
+
+              {showDropdown && noMatches && (
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: 0,
+                  right: 0,
+                  background: '#fff',
+                  border: '1.5px solid var(--green)',
+                  borderTop: 'none',
+                  borderRadius: '0 0 12px 12px',
+                  zIndex: 20,
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
+                }}>
+                  <div style={{
+                    padding:    '10px 16px',
+                    fontSize:   '12px',
+                    color:      'var(--muted)',
+                    borderBottom: '1px solid var(--border)',
+                  }}>
+                    No matching cities — try one of these:
+                  </div>
+                  <div
+                    onMouseDown={e => { e.preventDefault(); detectLocation() }}
+                    style={{
+                      padding:      '13px 16px',
+                      fontSize:     '14px',
+                      fontWeight:   500,
+                      cursor:       'pointer',
+                      color:        'var(--green)',
+                      borderBottom: '1px solid var(--border)',
+                    }}
+                  >
+                    📍 Use current location (GPS)
+                  </div>
+                  <div
+                    onMouseDown={e => { e.preventDefault(); handleCustomCity() }}
+                    style={{
+                      padding:  '13px 16px',
+                      fontSize: '14px',
+                      fontWeight: 500,
+                      cursor:   'pointer',
+                      color:    'var(--text)',
+                    }}
+                  >
+                    + Add "{citySearch.trim()}" as custom city
+                    <div style={{
+                      fontSize:  '11px',
+                      color:     'var(--muted)',
+                      marginTop: '2px',
+                      fontWeight: 400,
+                    }}>
+                      Saved without climate zone — care tips won't be tailored.
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
