@@ -1,0 +1,419 @@
+#,City / IMD Station Name,Zone Code,Zone Name,Summer Max Temp,WooCommerce Slug (pa_climate)
+1,Adilabad,Z13,Tropical Wet-Dry Savanna Hot Interior,≤48°C,tropical-wet-dry-savanna-hot-interior-min-11c-to-max-48c
+2,Adiramapattinam,Z14,Tropical Wet-Dry Savanna Coastal,≤40°C,tropical-wet-dry-savanna-coastal-min-17c-to-max-40c
+3,Agartala,Z5,Subtropical Monsoon,≤38°C,subtropical-monsoon-min-8c-to-max-38c
+4,Agatti,Z11,Tropical Monsoon Coastal,≤38°C,tropical-monsoon-coastal-min-14c-to-max-38c
+5,Agra,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+6,Ahmedabad,Z8,Subtropical Semi-Arid,≤44°C,subtropical-semi-arid-min-5c-to-max-44c
+7,Ahmednagar,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+8,Aizawl,Z6,Subtropical Monsoon Highland,≤34°C,subtropical-monsoon-highland-min-3c-to-max-34c
+9,Ajmer,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+10,Akola,Z13,Tropical Wet-Dry Savanna Hot Interior,≤48°C,tropical-wet-dry-savanna-hot-interior-min-11c-to-max-48c
+11,Alappuzha,Z11,Tropical Monsoon Coastal,≤38°C,tropical-monsoon-coastal-min-14c-to-max-38c
+12,Alibag,Z11,Tropical Monsoon Coastal,≤38°C,tropical-monsoon-coastal-min-14c-to-max-38c
+13,Aligarh,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+14,Alirajpur,Z7,Subtropical Humid,≤42°C,subtropical-humid-min-8c-to-max-42c
+15,Ambala,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+16,Ambikapur,Z7,Subtropical Humid,≤42°C,subtropical-humid-min-8c-to-max-42c
+17,Aminidivi,Z11,Tropical Monsoon Coastal,≤38°C,tropical-monsoon-coastal-min-14c-to-max-38c
+18,Amravati,Z13,Tropical Wet-Dry Savanna Hot Interior,≤48°C,tropical-wet-dry-savanna-hot-interior-min-11c-to-max-48c
+19,Amreli,Z8,Subtropical Semi-Arid,≤44°C,subtropical-semi-arid-min-5c-to-max-44c
+20,Amritsar,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+21,Anantapur,Z18,Tropical Hot Semi-Arid,≤47°C,tropical-hot-semi-arid-min-14c-to-max-47c
+22,Angul,Z13,Tropical Wet-Dry Savanna Hot Interior,≤48°C,tropical-wet-dry-savanna-hot-interior-min-11c-to-max-48c
+23,Ariyalur,Z14,Tropical Wet-Dry Savanna Coastal,≤40°C,tropical-wet-dry-savanna-coastal-min-17c-to-max-40c
+24,Arogyavaram,Z18,Tropical Hot Semi-Arid,≤47°C,tropical-hot-semi-arid-min-14c-to-max-47c
+25,Auli,Z1,Cold Alpine,≤20°C,cold-alpine-min-20c-to-max-20c
+26,Aurangabad Chikalthana,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+27,Badrinath,Z1,Cold Alpine,≤20°C,cold-alpine-min-20c-to-max-20c
+28,Bagalkot,Z18,Tropical Hot Semi-Arid,≤47°C,tropical-hot-semi-arid-min-14c-to-max-47c
+29,Bagati,Z7,Subtropical Humid,≤42°C,subtropical-humid-min-8c-to-max-42c
+30,Bahraich,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+31,Balasore,Z7,Subtropical Humid,≤42°C,subtropical-humid-min-8c-to-max-42c
+32,Balehonnur,Z10,Tropical Mid-Elevation Monsoon,≤38°C,tropical-mid-elevation-monsoon-min-9c-to-max-38c
+33,Ballia Mirdha,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+34,Balurghat,Z7,Subtropical Humid,≤42°C,subtropical-humid-min-8c-to-max-42c
+35,Banda,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+36,Banihal,Z4,Subtropical Highland,≤33°C,subtropical-highland-min-5c-to-max-33c
+37,Bankura,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+38,Bapatla,Z13,Tropical Wet-Dry Savanna Hot Interior,≤48°C,tropical-wet-dry-savanna-hot-interior-min-11c-to-max-48c
+39,Barabanki,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+40,Barapani,Z4,Subtropical Highland,≤33°C,subtropical-highland-min-5c-to-max-33c
+41,Bareilly,Z7,Subtropical Humid,≤42°C,subtropical-humid-min-8c-to-max-42c
+42,Baripada,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+43,Barmer,Z17,Subtropical Hot Arid,≤50°C,subtropical-hot-arid-min-4c-to-max-50c
+44,Batote,Z4,Subtropical Highland,≤33°C,subtropical-highland-min-5c-to-max-33c
+45,Beed,Z18,Tropical Hot Semi-Arid,≤47°C,tropical-hot-semi-arid-min-14c-to-max-47c
+46,Belgaum,Z12,Tropical Wet-Dry Savanna,≤40°C,tropical-wet-dry-savanna-min-11c-to-max-40c
+47,Belgaum A,Z12,Tropical Wet-Dry Savanna,≤40°C,tropical-wet-dry-savanna-min-11c-to-max-40c
+48,Bengaluru,Z12,Tropical Wet-Dry Savanna,≤40°C,tropical-wet-dry-savanna-min-11c-to-max-40c
+49,Bengaluru Hal,Z12,Tropical Wet-Dry Savanna,≤40°C,tropical-wet-dry-savanna-min-11c-to-max-40c
+50,Berhampore,Z7,Subtropical Humid,≤42°C,subtropical-humid-min-8c-to-max-42c
+51,Betul,Z7,Subtropical Humid,≤42°C,subtropical-humid-min-8c-to-max-42c
+52,Bhaderwah,Z4,Subtropical Highland,≤33°C,subtropical-highland-min-5c-to-max-33c
+53,Bhadrachalam,Z13,Tropical Wet-Dry Savanna Hot Interior,≤48°C,tropical-wet-dry-savanna-hot-interior-min-11c-to-max-48c
+54,Bhagalpur,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+55,Bharatpur,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+56,Bhavnagar,Z8,Subtropical Semi-Arid,≤44°C,subtropical-semi-arid-min-5c-to-max-44c
+57,Bhawanipatna,Z13,Tropical Wet-Dry Savanna Hot Interior,≤48°C,tropical-wet-dry-savanna-hot-interior-min-11c-to-max-48c
+58,Bhilwara,Z8,Subtropical Semi-Arid,≤44°C,subtropical-semi-arid-min-5c-to-max-44c
+59,Bhira,Z13,Tropical Wet-Dry Savanna Hot Interior,≤48°C,tropical-wet-dry-savanna-hot-interior-min-11c-to-max-48c
+60,Bhopal Bairagarh,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+61,Bhubaneswar,Z13,Tropical Wet-Dry Savanna Hot Interior,≤48°C,tropical-wet-dry-savanna-hot-interior-min-11c-to-max-48c
+62,Bhuj,Z17,Subtropical Hot Arid,≤50°C,subtropical-hot-arid-min-4c-to-max-50c
+63,Bhuntar,Z4,Subtropical Highland,≤33°C,subtropical-highland-min-5c-to-max-33c
+64,Bidar,Z18,Tropical Hot Semi-Arid,≤47°C,tropical-hot-semi-arid-min-14c-to-max-47c
+65,Bijapur,Z18,Tropical Hot Semi-Arid,≤47°C,tropical-hot-semi-arid-min-14c-to-max-47c
+66,Bikaner,Z17,Subtropical Hot Arid,≤50°C,subtropical-hot-arid-min-4c-to-max-50c
+67,Bolangir,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+68,Brahmapuri,Z13,Tropical Wet-Dry Savanna Hot Interior,≤48°C,tropical-wet-dry-savanna-hot-interior-min-11c-to-max-48c
+69,Buldhana,Z13,Tropical Wet-Dry Savanna Hot Interior,≤48°C,tropical-wet-dry-savanna-hot-interior-min-11c-to-max-48c
+70,Bumla,Z1,Cold Alpine,≤20°C,cold-alpine-min-20c-to-max-20c
+71,Burdwan,Z7,Subtropical Humid,≤42°C,subtropical-humid-min-8c-to-max-42c
+72,Canning,Z7,Subtropical Humid,≤42°C,subtropical-humid-min-8c-to-max-42c
+73,Car Nicobar,Z11,Tropical Monsoon Coastal,≤38°C,tropical-monsoon-coastal-min-14c-to-max-38c
+74,Chail,Z3,Subtropical Hills,≤28°C,subtropical-hills-min-3c-to-max-28c
+75,Chandabali,Z13,Tropical Wet-Dry Savanna Hot Interior,≤48°C,tropical-wet-dry-savanna-hot-interior-min-11c-to-max-48c
+76,Chandigarh,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+77,Chandrapur,Z13,Tropical Wet-Dry Savanna Hot Interior,≤48°C,tropical-wet-dry-savanna-hot-interior-min-11c-to-max-48c
+78,Chaparmukh,Z7,Subtropical Humid,≤42°C,subtropical-humid-min-8c-to-max-42c
+79,Chennai Meenambakkam,Z14,Tropical Wet-Dry Savanna Coastal,≤40°C,tropical-wet-dry-savanna-coastal-min-17c-to-max-40c
+80,Chennai Nungambakkam,Z14,Tropical Wet-Dry Savanna Coastal,≤40°C,tropical-wet-dry-savanna-coastal-min-17c-to-max-40c
+81,Cherrapunjee Sohra,Z4,Subtropical Highland,≤33°C,subtropical-highland-min-5c-to-max-33c
+82,Chhindwara,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+83,Chickmagalur,Z10,Tropical Mid-Elevation Monsoon,≤38°C,tropical-mid-elevation-monsoon-min-9c-to-max-38c
+84,Chintamani,Z7,Subtropical Humid,≤42°C,subtropical-humid-min-8c-to-max-42c
+85,Chitkul,Z1,Cold Alpine,≤20°C,cold-alpine-min-20c-to-max-20c
+86,Chitradurga,Z18,Tropical Hot Semi-Arid,≤47°C,tropical-hot-semi-arid-min-14c-to-max-47c
+87,Chittorgarh,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+88,Churk,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+89,Churu,Z17,Subtropical Hot Arid,≤50°C,subtropical-hot-arid-min-4c-to-max-50c
+90,Coimbatore A,Z13,Tropical Wet-Dry Savanna Hot Interior,≤48°C,tropical-wet-dry-savanna-hot-interior-min-11c-to-max-48c
+91,Contai,Z7,Subtropical Humid,≤42°C,subtropical-humid-min-8c-to-max-42c
+92,Cooch Behar,Z5,Subtropical Monsoon,≤38°C,subtropical-monsoon-min-8c-to-max-38c
+93,Coonoor,Z9,Cool Tropical Highland,≤33°C,cool-tropical-highland-min-5c-to-max-33c
+94,Cuddalore,Z14,Tropical Wet-Dry Savanna Coastal,≤40°C,tropical-wet-dry-savanna-coastal-min-17c-to-max-40c
+95,Cuttack,Z13,Tropical Wet-Dry Savanna Hot Interior,≤48°C,tropical-wet-dry-savanna-hot-interior-min-11c-to-max-48c
+96,Dahanu,Z11,Tropical Monsoon Coastal,≤38°C,tropical-monsoon-coastal-min-14c-to-max-38c
+97,Dalhousie,Z2,Cold Hills,≤25°C,cold-hills-min-5c-to-max-25c
+98,Daltonganj,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+99,Damoh,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+100,Darbhanga,Z7,Subtropical Humid,≤42°C,subtropical-humid-min-8c-to-max-42c
+101,Darjeeling,Z2,Cold Hills,≤25°C,cold-hills-min-5c-to-max-25c
+102,Datia,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+103,Davangere,Z18,Tropical Hot Semi-Arid,≤47°C,tropical-hot-semi-arid-min-14c-to-max-47c
+104,Deesa,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+105,Dehradun,Z7,Subtropical Humid,≤42°C,subtropical-humid-min-8c-to-max-42c
+106,Dehri,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+107,Deomali,Z3,Subtropical Hills,≤28°C,subtropical-hills-min-3c-to-max-28c
+108,Dhar,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+109,Dharamsala,Z4,Subtropical Highland,≤33°C,subtropical-highland-min-5c-to-max-33c
+110,Dharmapuri,Z13,Tropical Wet-Dry Savanna Hot Interior,≤48°C,tropical-wet-dry-savanna-hot-interior-min-11c-to-max-48c
+111,Dharwad,Z18,Tropical Hot Semi-Arid,≤47°C,tropical-hot-semi-arid-min-14c-to-max-47c
+112,Dhubri,Z5,Subtropical Monsoon,≤38°C,subtropical-monsoon-min-8c-to-max-38c
+113,Diamond Harbour,Z7,Subtropical Humid,≤42°C,subtropical-humid-min-8c-to-max-42c
+114,Digha,Z7,Subtropical Humid,≤42°C,subtropical-humid-min-8c-to-max-42c
+115,Diskit (Nubra),Z0,Cold Arid Trans-Himalayan,≤30°C,cold-arid-trans-himalayan-min-30c-to-max-30c
+116,Diu,Z11,Tropical Monsoon Coastal,≤38°C,tropical-monsoon-coastal-min-14c-to-max-38c
+117,Drass,Z0,Cold Arid Trans-Himalayan,≤30°C,cold-arid-trans-himalayan-min-30c-to-max-30c
+118,Dwarka,Z8,Subtropical Semi-Arid,≤44°C,subtropical-semi-arid-min-5c-to-max-44c
+119,Erode,Z13,Tropical Wet-Dry Savanna Hot Interior,≤48°C,tropical-wet-dry-savanna-hot-interior-min-11c-to-max-48c
+120,Etawah,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+121,Fatehgarh Farrukhabad,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+122,Fatehpur,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+123,Forbesganj,Z7,Subtropical Humid,≤42°C,subtropical-humid-min-8c-to-max-42c
+124,Fursatganj,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+125,Gadag,Z18,Tropical Hot Semi-Arid,≤47°C,tropical-hot-semi-arid-min-14c-to-max-47c
+126,Gandhinagar,Z8,Subtropical Semi-Arid,≤44°C,subtropical-semi-arid-min-5c-to-max-44c
+127,Gangotri,Z1,Cold Alpine,≤20°C,cold-alpine-min-20c-to-max-20c
+128,Gangtok,Z3,Subtropical Hills,≤28°C,subtropical-hills-min-3c-to-max-28c
+129,Gannavaram,Z14,Tropical Wet-Dry Savanna Coastal,≤40°C,tropical-wet-dry-savanna-coastal-min-17c-to-max-40c
+130,Gaya,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+131,Gazipur,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+132,Gondia,Z13,Tropical Wet-Dry Savanna Hot Interior,≤48°C,tropical-wet-dry-savanna-hot-interior-min-11c-to-max-48c
+133,Gopalpur,Z11,Tropical Monsoon Coastal,≤38°C,tropical-monsoon-coastal-min-14c-to-max-38c
+134,Gorakhpur,Z7,Subtropical Humid,≤42°C,subtropical-humid-min-8c-to-max-42c
+135,Gulbarga,Z18,Tropical Hot Semi-Arid,≤47°C,tropical-hot-semi-arid-min-14c-to-max-47c
+136,Gulmarg,Z2,Cold Hills,≤25°C,cold-hills-min-5c-to-max-25c
+137,Guna,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+138,Gurudongmar,Z1,Cold Alpine,≤20°C,cold-alpine-min-20c-to-max-20c
+139,Gurugram,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+140,Guwahati,Z7,Subtropical Humid,≤42°C,subtropical-humid-min-8c-to-max-42c
+141,Gwalior,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+142,Haldia,Z11,Tropical Monsoon Coastal,≤38°C,tropical-monsoon-coastal-min-14c-to-max-38c
+143,Hamirpur,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+144,Hanamkonda,Z18,Tropical Hot Semi-Arid,≤47°C,tropical-hot-semi-arid-min-14c-to-max-47c
+145,Hardoi,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+146,Harnai,Z11,Tropical Monsoon Coastal,≤38°C,tropical-monsoon-coastal-min-14c-to-max-38c
+147,Hassan,Z10,Tropical Mid-Elevation Monsoon,≤38°C,tropical-mid-elevation-monsoon-min-9c-to-max-38c
+148,Haveri,Z18,Tropical Hot Semi-Arid,≤47°C,tropical-hot-semi-arid-min-14c-to-max-47c
+149,Hirakud,Z13,Tropical Wet-Dry Savanna Hot Interior,≤48°C,tropical-wet-dry-savanna-hot-interior-min-11c-to-max-48c
+150,Hisar,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+151,Honavar,Z11,Tropical Monsoon Coastal,≤38°C,tropical-monsoon-coastal-min-14c-to-max-38c
+152,Hoshangabad,Z13,Tropical Wet-Dry Savanna Hot Interior,≤48°C,tropical-wet-dry-savanna-hot-interior-min-11c-to-max-48c
+153,Hutbay,Z11,Tropical Monsoon Coastal,≤38°C,tropical-monsoon-coastal-min-14c-to-max-38c
+154,Hyderabad,Z18,Tropical Hot Semi-Arid,≤47°C,tropical-hot-semi-arid-min-14c-to-max-47c
+155,Idar,Z8,Subtropical Semi-Arid,≤44°C,subtropical-semi-arid-min-5c-to-max-44c
+156,Imphal,Z6,Subtropical Monsoon Highland,≤34°C,subtropical-monsoon-highland-min-3c-to-max-34c
+157,Indore,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+158,Itanagar,Z5,Subtropical Monsoon,≤38°C,subtropical-monsoon-min-8c-to-max-38c
+159,Jabalpur,Z7,Subtropical Humid,≤42°C,subtropical-humid-min-8c-to-max-42c
+160,Jagdalpur,Z12,Tropical Wet-Dry Savanna,≤40°C,tropical-wet-dry-savanna-min-11c-to-max-40c
+161,Jaipur,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+162,Jaisalmer,Z17,Subtropical Hot Arid,≤50°C,subtropical-hot-arid-min-4c-to-max-50c
+163,Jalgaon,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+164,Jalpaiguri,Z5,Subtropical Monsoon,≤38°C,subtropical-monsoon-min-8c-to-max-38c
+165,Jammu,Z7,Subtropical Humid,≤42°C,subtropical-humid-min-8c-to-max-42c
+166,Jamshedpur,Z12,Tropical Wet-Dry Savanna,≤40°C,tropical-wet-dry-savanna-min-11c-to-max-40c
+167,Jamshedpur City,Z12,Tropical Wet-Dry Savanna,≤40°C,tropical-wet-dry-savanna-min-11c-to-max-40c
+168,Jawai Bandh,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+169,Jhansi,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+170,Jharsuguda,Z12,Tropical Wet-Dry Savanna,≤40°C,tropical-wet-dry-savanna-min-11c-to-max-40c
+171,Jodhpur,Z17,Subtropical Hot Arid,≤50°C,subtropical-hot-arid-min-4c-to-max-50c
+172,Jorhat,Z5,Subtropical Monsoon,≤38°C,subtropical-monsoon-min-8c-to-max-38c
+173,Kadappa,Z18,Tropical Hot Semi-Arid,≤47°C,tropical-hot-semi-arid-min-14c-to-max-47c
+174,Kailashahar,Z5,Subtropical Monsoon,≤38°C,subtropical-monsoon-min-8c-to-max-38c
+175,Kakinada,Z14,Tropical Wet-Dry Savanna Coastal,≤40°C,tropical-wet-dry-savanna-coastal-min-17c-to-max-40c
+176,Kalimpong,Z3,Subtropical Hills,≤28°C,subtropical-hills-min-3c-to-max-28c
+177,Kalingapatnam,Z11,Tropical Monsoon Coastal,≤38°C,tropical-monsoon-coastal-min-14c-to-max-38c
+178,Kalpa,Z1,Cold Alpine,≤20°C,cold-alpine-min-20c-to-max-20c
+179,Kamachipuram,Z3,Subtropical Hills,≤28°C,subtropical-hills-min-3c-to-max-28c
+180,Kangra A,Z7,Subtropical Humid,≤42°C,subtropical-humid-min-8c-to-max-42c
+181,Kannur,Z11,Tropical Monsoon Coastal,≤38°C,tropical-monsoon-coastal-min-14c-to-max-38c
+182,Kanpur,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+183,Kanyakumari,Z14,Tropical Wet-Dry Savanna Coastal,≤40°C,tropical-wet-dry-savanna-coastal-min-17c-to-max-40c
+184,Karaikal,Z14,Tropical Wet-Dry Savanna Coastal,≤40°C,tropical-wet-dry-savanna-coastal-min-17c-to-max-40c
+185,Kargil,Z0,Cold Arid Trans-Himalayan,≤30°C,cold-arid-trans-himalayan-min-30c-to-max-30c
+186,Karnal,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+187,Karur Paramathi,Z13,Tropical Wet-Dry Savanna Hot Interior,≤48°C,tropical-wet-dry-savanna-hot-interior-min-11c-to-max-48c
+188,Karwar,Z11,Tropical Monsoon Coastal,≤38°C,tropical-monsoon-coastal-min-14c-to-max-38c
+189,Kasauli,Z3,Subtropical Hills,≤28°C,subtropical-hills-min-3c-to-max-28c
+190,Kathua,Z7,Subtropical Humid,≤42°C,subtropical-humid-min-8c-to-max-42c
+191,Katra,Z7,Subtropical Humid,≤42°C,subtropical-humid-min-8c-to-max-42c
+192,Kavali,Z14,Tropical Wet-Dry Savanna Coastal,≤40°C,tropical-wet-dry-savanna-coastal-min-17c-to-max-40c
+193,Kaza,Z1,Cold Alpine,≤20°C,cold-alpine-min-20c-to-max-20c
+194,Kedarnath,Z1,Cold Alpine,≤20°C,cold-alpine-min-20c-to-max-20c
+195,Keonjhar,Z10,Tropical Mid-Elevation Monsoon,≤38°C,tropical-mid-elevation-monsoon-min-9c-to-max-38c
+196,Keshod,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+197,Keylong,Z1,Cold Alpine,≤20°C,cold-alpine-min-20c-to-max-20c
+198,Khajuraho,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+199,Khammam,Z12,Tropical Wet-Dry Savanna,≤40°C,tropical-wet-dry-savanna-min-11c-to-max-40c
+200,Khandwa,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+201,Khargone,Z8,Subtropical Semi-Arid,≤44°C,subtropical-semi-arid-min-5c-to-max-44c
+202,Kochi Cial,Z11,Tropical Monsoon Coastal,≤38°C,tropical-monsoon-coastal-min-14c-to-max-38c
+203,Kodaikanal,Z9,Cool Tropical Highland,≤33°C,cool-tropical-highland-min-5c-to-max-33c
+204,Kohima,Z4,Subtropical Highland,≤33°C,subtropical-highland-min-5c-to-max-33c
+205,Kokernag,Z4,Subtropical Highland,≤33°C,subtropical-highland-min-5c-to-max-33c
+206,Kolhapur,Z13,Tropical Wet-Dry Savanna Hot Interior,≤48°C,tropical-wet-dry-savanna-hot-interior-min-11c-to-max-48c
+207,Kolkata Alipore,Z7,Subtropical Humid,≤42°C,subtropical-humid-min-8c-to-max-42c
+208,Kolkata Dum Dum,Z7,Subtropical Humid,≤42°C,subtropical-humid-min-8c-to-max-42c
+209,Koppal,Z18,Tropical Hot Semi-Arid,≤47°C,tropical-hot-semi-arid-min-14c-to-max-47c
+210,Koradacheri,Z13,Tropical Wet-Dry Savanna Hot Interior,≤48°C,tropical-wet-dry-savanna-hot-interior-min-11c-to-max-48c
+211,Kota,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+212,Kottayam,Z11,Tropical Monsoon Coastal,≤38°C,tropical-monsoon-coastal-min-14c-to-max-38c
+213,Kozhikode,Z11,Tropical Monsoon Coastal,≤38°C,tropical-monsoon-coastal-min-14c-to-max-38c
+214,Kozhikode A,Z11,Tropical Monsoon Coastal,≤38°C,tropical-monsoon-coastal-min-14c-to-max-38c
+215,Krishnagar,Z5,Subtropical Monsoon,≤38°C,subtropical-monsoon-min-8c-to-max-38c
+216,Kupwara,Z4,Subtropical Highland,≤33°C,subtropical-highland-min-5c-to-max-33c
+217,Kurnool,Z18,Tropical Hot Semi-Arid,≤47°C,tropical-hot-semi-arid-min-14c-to-max-47c
+218,Lachen,Z1,Cold Alpine,≤20°C,cold-alpine-min-20c-to-max-20c
+219,Lachung,Z1,Cold Alpine,≤20°C,cold-alpine-min-20c-to-max-20c
+220,Lakhimpur Kheri,Z7,Subtropical Humid,≤42°C,subtropical-humid-min-8c-to-max-42c
+221,Lansdowne,Z2,Cold Hills,≤25°C,cold-hills-min-5c-to-max-25c
+222,Leh,Z0,Cold Arid Trans-Himalayan,≤30°C,cold-arid-trans-himalayan-min-30c-to-max-30c
+223,Lengpui,Z5,Subtropical Monsoon,≤38°C,subtropical-monsoon-min-8c-to-max-38c
+224,Long Island,Z11,Tropical Monsoon Coastal,≤38°C,tropical-monsoon-coastal-min-14c-to-max-38c
+225,Lucknow,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+226,Ludhiana,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+227,Machilipatnam,Z14,Tropical Wet-Dry Savanna Coastal,≤40°C,tropical-wet-dry-savanna-coastal-min-17c-to-max-40c
+228,Madurai A,Z13,Tropical Wet-Dry Savanna Hot Interior,≤48°C,tropical-wet-dry-savanna-hot-interior-min-11c-to-max-48c
+229,Mago,Z1,Cold Alpine,≤20°C,cold-alpine-min-20c-to-max-20c
+230,Mahabaleshwar,Z9,Cool Tropical Highland,≤33°C,cool-tropical-highland-min-5c-to-max-33c
+231,Mahboob Nagar,Z18,Tropical Hot Semi-Arid,≤47°C,tropical-hot-semi-arid-min-14c-to-max-47c
+232,Mahuva,Z11,Tropical Monsoon Coastal,≤38°C,tropical-monsoon-coastal-min-14c-to-max-38c
+233,Malanjkhand,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+234,Maldah,Z7,Subtropical Humid,≤42°C,subtropical-humid-min-8c-to-max-42c
+235,Malegaon,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+236,Manali,Z2,Cold Hills,≤25°C,cold-hills-min-5c-to-max-25c
+237,Mandi,Z7,Subtropical Humid,≤42°C,subtropical-humid-min-8c-to-max-42c
+238,Mandla,Z13,Tropical Wet-Dry Savanna Hot Interior,≤48°C,tropical-wet-dry-savanna-hot-interior-min-11c-to-max-48c
+239,Mandvi,Z7,Subtropical Humid,≤42°C,subtropical-humid-min-8c-to-max-42c
+240,Mandya,Z12,Tropical Wet-Dry Savanna,≤40°C,tropical-wet-dry-savanna-min-11c-to-max-40c
+241,Mangalore Bajpea,Z11,Tropical Monsoon Coastal,≤38°C,tropical-monsoon-coastal-min-14c-to-max-38c
+242,Mangalore Panambur,Z11,Tropical Monsoon Coastal,≤38°C,tropical-monsoon-coastal-min-14c-to-max-38c
+243,Mayabunder,Z11,Tropical Monsoon Coastal,≤38°C,tropical-monsoon-coastal-min-14c-to-max-38c
+244,Mazbat,Z5,Subtropical Monsoon,≤38°C,subtropical-monsoon-min-8c-to-max-38c
+245,Mcleod Ganj,Z3,Subtropical Hills,≤28°C,subtropical-hills-min-3c-to-max-28c
+246,Medak,Z13,Tropical Wet-Dry Savanna Hot Interior,≤48°C,tropical-wet-dry-savanna-hot-interior-min-11c-to-max-48c
+247,Mednapur,Z7,Subtropical Humid,≤42°C,subtropical-humid-min-8c-to-max-42c
+248,Meerut,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+249,Minicoy,Z11,Tropical Monsoon Coastal,≤38°C,tropical-monsoon-coastal-min-14c-to-max-38c
+250,Mohanbari,Z5,Subtropical Monsoon,≤38°C,subtropical-monsoon-min-8c-to-max-38c
+251,Moradabad,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+252,Mormugao,Z11,Tropical Monsoon Coastal,≤38°C,tropical-monsoon-coastal-min-14c-to-max-38c
+253,Mount Abu,Z4,Subtropical Highland,≤33°C,subtropical-highland-min-5c-to-max-33c
+254,Mukteshwar,Z4,Subtropical Highland,≤33°C,subtropical-highland-min-5c-to-max-33c
+255,Mumbai Colaba,Z11,Tropical Monsoon Coastal,≤38°C,tropical-monsoon-coastal-min-14c-to-max-38c
+256,Mumbai Santacruz,Z11,Tropical Monsoon Coastal,≤38°C,tropical-monsoon-coastal-min-14c-to-max-38c
+257,Munnar,Z9,Cool Tropical Highland,≤33°C,cool-tropical-highland-min-5c-to-max-33c
+258,Munsiyari,Z2,Cold Hills,≤25°C,cold-hills-min-5c-to-max-25c
+259,Munsong,Z3,Subtropical Hills,≤28°C,subtropical-hills-min-3c-to-max-28c
+260,Muzaffar Nagar,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+261,Muzaffarpur,Z7,Subtropical Humid,≤42°C,subtropical-humid-min-8c-to-max-42c
+262,Mysore,Z12,Tropical Wet-Dry Savanna,≤40°C,tropical-wet-dry-savanna-min-11c-to-max-40c
+263,Nagapattinam,Z14,Tropical Wet-Dry Savanna Coastal,≤40°C,tropical-wet-dry-savanna-coastal-min-17c-to-max-40c
+264,Nagpur,Z13,Tropical Wet-Dry Savanna Hot Interior,≤48°C,tropical-wet-dry-savanna-hot-interior-min-11c-to-max-48c
+265,Nahan,Z7,Subtropical Humid,≤42°C,subtropical-humid-min-8c-to-max-42c
+266,Nainital,Z3,Subtropical Hills,≤28°C,subtropical-hills-min-3c-to-max-28c
+267,Najibabad,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+268,Nako,Z1,Cold Alpine,≤20°C,cold-alpine-min-20c-to-max-20c
+269,Nalgonda,Z18,Tropical Hot Semi-Arid,≤47°C,tropical-hot-semi-arid-min-14c-to-max-47c
+270,Naliya,Z11,Tropical Monsoon Coastal,≤38°C,tropical-monsoon-coastal-min-14c-to-max-38c
+271,Nancowry,Z11,Tropical Monsoon Coastal,≤38°C,tropical-monsoon-coastal-min-14c-to-max-38c
+272,Nanded,Z13,Tropical Wet-Dry Savanna Hot Interior,≤48°C,tropical-wet-dry-savanna-hot-interior-min-11c-to-max-48c
+273,Nandigama,Z18,Tropical Hot Semi-Arid,≤47°C,tropical-hot-semi-arid-min-14c-to-max-47c
+274,Nandyal,Z18,Tropical Hot Semi-Arid,≤47°C,tropical-hot-semi-arid-min-14c-to-max-47c
+275,Narnaul,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+276,Narsapur,Z14,Tropical Wet-Dry Savanna Coastal,≤40°C,tropical-wet-dry-savanna-coastal-min-17c-to-max-40c
+277,Narsinghpur,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+278,Nashik,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+279,Nellore,Z14,Tropical Wet-Dry Savanna Coastal,≤40°C,tropical-wet-dry-savanna-coastal-min-17c-to-max-40c
+280,New Delhi Ayanagar,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+281,New Delhi Palam,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+282,New Delhi Ridge,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+283,New Delhi Safdarjung,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+284,New Kandla,Z8,Subtropical Semi-Arid,≤44°C,subtropical-semi-arid-min-5c-to-max-44c
+285,Nizamabad,Z12,Tropical Wet-Dry Savanna,≤40°C,tropical-wet-dry-savanna-min-11c-to-max-40c
+286,North Lakhimpur,Z5,Subtropical Monsoon,≤38°C,subtropical-monsoon-min-8c-to-max-38c
+287,Nowgong,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+288,Okha,Z14,Tropical Wet-Dry Savanna Coastal,≤40°C,tropical-wet-dry-savanna-coastal-min-17c-to-max-40c
+289,Ongole,Z14,Tropical Wet-Dry Savanna Coastal,≤40°C,tropical-wet-dry-savanna-coastal-min-17c-to-max-40c
+290,Orai,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+291,Osmanabad,Z18,Tropical Hot Semi-Arid,≤47°C,tropical-hot-semi-arid-min-14c-to-max-47c
+292,Pachmarhi,Z10,Tropical Mid-Elevation Monsoon,≤38°C,tropical-mid-elevation-monsoon-min-9c-to-max-38c
+293,Padum,Z0,Cold Arid Trans-Himalayan,≤30°C,cold-arid-trans-himalayan-min-30c-to-max-30c
+294,Pahalgam,Z1,Cold Alpine,≤20°C,cold-alpine-min-20c-to-max-20c
+295,Palakkad,Z14,Tropical Wet-Dry Savanna Coastal,≤40°C,tropical-wet-dry-savanna-coastal-min-17c-to-max-40c
+296,Palayamkottai,Z14,Tropical Wet-Dry Savanna Coastal,≤40°C,tropical-wet-dry-savanna-coastal-min-17c-to-max-40c
+297,Pamban,Z14,Tropical Wet-Dry Savanna Coastal,≤40°C,tropical-wet-dry-savanna-coastal-min-17c-to-max-40c
+298,Panjim,Z11,Tropical Monsoon Coastal,≤38°C,tropical-monsoon-coastal-min-14c-to-max-38c
+299,Pantnagar,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+300,Paradeep,Z11,Tropical Monsoon Coastal,≤38°C,tropical-monsoon-coastal-min-14c-to-max-38c
+301,Parbhani,Z12,Tropical Wet-Dry Savanna,≤40°C,tropical-wet-dry-savanna-min-11c-to-max-40c
+302,Passighat,Z5,Subtropical Monsoon,≤38°C,subtropical-monsoon-min-8c-to-max-38c
+303,Patiala,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+304,Patna,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+305,Pendra Road,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+306,Phalodi,Z17,Subtropical Hot Arid,≤50°C,subtropical-hot-arid-min-4c-to-max-50c
+307,Phulbani,Z7,Subtropical Humid,≤42°C,subtropical-humid-min-8c-to-max-42c
+308,Pilani,Z17,Subtropical Hot Arid,≤50°C,subtropical-hot-arid-min-4c-to-max-50c
+309,Porbandar A,Z8,Subtropical Semi-Arid,≤44°C,subtropical-semi-arid-min-5c-to-max-44c
+310,Port Blair,Z11,Tropical Monsoon Coastal,≤38°C,tropical-monsoon-coastal-min-14c-to-max-38c
+311,Prayagraj Allahabad,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+312,Puducherry,Z14,Tropical Wet-Dry Savanna Coastal,≤40°C,tropical-wet-dry-savanna-coastal-min-17c-to-max-40c
+313,Punalur,Z11,Tropical Monsoon Coastal,≤38°C,tropical-monsoon-coastal-min-14c-to-max-38c
+314,Pune,Z13,Tropical Wet-Dry Savanna Hot Interior,≤48°C,tropical-wet-dry-savanna-hot-interior-min-11c-to-max-48c
+315,Puri,Z11,Tropical Monsoon Coastal,≤38°C,tropical-monsoon-coastal-min-14c-to-max-38c
+316,Purnea,Z7,Subtropical Humid,≤42°C,subtropical-humid-min-8c-to-max-42c
+317,Purulia,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+318,Qazigund,Z4,Subtropical Highland,≤33°C,subtropical-highland-min-5c-to-max-33c
+319,Raichur,Z18,Tropical Hot Semi-Arid,≤47°C,tropical-hot-semi-arid-min-14c-to-max-47c
+320,Raipur,Z13,Tropical Wet-Dry Savanna Hot Interior,≤48°C,tropical-wet-dry-savanna-hot-interior-min-11c-to-max-48c
+321,Raipur Mana,Z13,Tropical Wet-Dry Savanna Hot Interior,≤48°C,tropical-wet-dry-savanna-hot-interior-min-11c-to-max-48c
+322,Rajgarh,Z8,Subtropical Semi-Arid,≤44°C,subtropical-semi-arid-min-5c-to-max-44c
+323,Rajkot,Z8,Subtropical Semi-Arid,≤44°C,subtropical-semi-arid-min-5c-to-max-44c
+324,Rajnandgaon,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+325,Ramagundam,Z13,Tropical Wet-Dry Savanna Hot Interior,≤48°C,tropical-wet-dry-savanna-hot-interior-min-11c-to-max-48c
+326,Ranchi,Z7,Subtropical Humid,≤42°C,subtropical-humid-min-8c-to-max-42c
+327,Rangia,Z11,Tropical Monsoon Coastal,≤38°C,tropical-monsoon-coastal-min-14c-to-max-38c
+328,Ranikhet,Z2,Cold Hills,≤25°C,cold-hills-min-5c-to-max-25c
+329,Ratlam,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+330,Ratnagiri,Z11,Tropical Monsoon Coastal,≤38°C,tropical-monsoon-coastal-min-14c-to-max-38c
+331,Rentachintala,Z18,Tropical Hot Semi-Arid,≤47°C,tropical-hot-semi-arid-min-14c-to-max-47c
+332,Rewa,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+333,Rohtak,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+334,Roorkee,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+335,Sabour,Z7,Subtropical Humid,≤42°C,subtropical-humid-min-8c-to-max-42c
+336,Sagar,Z12,Tropical Wet-Dry Savanna,≤40°C,tropical-wet-dry-savanna-min-11c-to-max-40c
+337,Sagar Island,Z11,Tropical Monsoon Coastal,≤38°C,tropical-monsoon-coastal-min-14c-to-max-38c
+338,Salem,Z13,Tropical Wet-Dry Savanna Hot Interior,≤48°C,tropical-wet-dry-savanna-hot-interior-min-11c-to-max-48c
+339,Sambalpur,Z13,Tropical Wet-Dry Savanna Hot Interior,≤48°C,tropical-wet-dry-savanna-hot-interior-min-11c-to-max-48c
+340,Sangla,Z2,Cold Hills,≤25°C,cold-hills-min-5c-to-max-25c
+341,Sangli,Z18,Tropical Hot Semi-Arid,≤47°C,tropical-hot-semi-arid-min-14c-to-max-47c
+342,Satara,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+343,Satna,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+344,Sawai Madhopur,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+345,Sela Pass,Z1,Cold Alpine,≤20°C,cold-alpine-min-20c-to-max-20c
+346,Seoni,Z13,Tropical Wet-Dry Savanna Hot Interior,≤48°C,tropical-wet-dry-savanna-hot-interior-min-11c-to-max-48c
+347,Shahjahanpur,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+348,Shajapur,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+349,Sheopur,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+350,Shillong,Z3,Subtropical Hills,≤28°C,subtropical-hills-min-3c-to-max-28c
+351,Shimla,Z4,Subtropical Highland,≤33°C,subtropical-highland-min-5c-to-max-33c
+352,Shimoga,Z12,Tropical Wet-Dry Savanna,≤40°C,tropical-wet-dry-savanna-min-11c-to-max-40c
+353,Shirali,Z11,Tropical Monsoon Coastal,≤38°C,tropical-monsoon-coastal-min-14c-to-max-38c
+354,Shivpuri,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+355,Sidhi,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+356,Sikar,Z17,Subtropical Hot Arid,≤50°C,subtropical-hot-arid-min-4c-to-max-50c
+357,Silchar,Z5,Subtropical Monsoon,≤38°C,subtropical-monsoon-min-8c-to-max-38c
+358,Solan Nauni,Z4,Subtropical Highland,≤33°C,subtropical-highland-min-5c-to-max-33c
+359,Solapur,Z18,Tropical Hot Semi-Arid,≤47°C,tropical-hot-semi-arid-min-14c-to-max-47c
+360,Sonamarg,Z1,Cold Alpine,≤20°C,cold-alpine-min-20c-to-max-20c
+361,Sriganganagar,Z17,Subtropical Hot Arid,≤50°C,subtropical-hot-arid-min-4c-to-max-50c
+362,Srinagar,Z4,Subtropical Highland,≤33°C,subtropical-highland-min-5c-to-max-33c
+363,Sriniketan,Z7,Subtropical Humid,≤42°C,subtropical-humid-min-8c-to-max-42c
+364,Sultanpur,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+365,Sundergarh,Z13,Tropical Wet-Dry Savanna Hot Interior,≤48°C,tropical-wet-dry-savanna-hot-interior-min-11c-to-max-48c
+366,Sundernagar,Z7,Subtropical Humid,≤42°C,subtropical-humid-min-8c-to-max-42c
+367,Surat,Z8,Subtropical Semi-Arid,≤44°C,subtropical-semi-arid-min-5c-to-max-44c
+368,Surendranagar,Z8,Subtropical Semi-Arid,≤44°C,subtropical-semi-arid-min-5c-to-max-44c
+369,Tabo,Z1,Cold Alpine,≤20°C,cold-alpine-min-20c-to-max-20c
+370,Tadong,Z4,Subtropical Highland,≤33°C,subtropical-highland-min-5c-to-max-33c
+371,Tangla,Z7,Subtropical Humid,≤42°C,subtropical-humid-min-8c-to-max-42c
+372,Tawang,Z1,Cold Alpine,≤20°C,cold-alpine-min-20c-to-max-20c
+373,Tehri,Z2,Cold Hills,≤25°C,cold-hills-min-5c-to-max-25c
+374,Tezpur,Z7,Subtropical Humid,≤42°C,subtropical-humid-min-8c-to-max-42c
+375,Thangu,Z1,Cold Alpine,≤20°C,cold-alpine-min-20c-to-max-20c
+376,Thanjavur,Z14,Tropical Wet-Dry Savanna Coastal,≤40°C,tropical-wet-dry-savanna-coastal-min-17c-to-max-40c
+377,Thiruvananthapuram,Z11,Tropical Monsoon Coastal,≤38°C,tropical-monsoon-coastal-min-14c-to-max-38c
+378,Thiruvananthapuram A,Z11,Tropical Monsoon Coastal,≤38°C,tropical-monsoon-coastal-min-14c-to-max-38c
+379,Thoothukudi New Port,Z14,Tropical Wet-Dry Savanna Coastal,≤40°C,tropical-wet-dry-savanna-coastal-min-17c-to-max-40c
+380,Thrissur Vellanikkara,Z14,Tropical Wet-Dry Savanna Coastal,≤40°C,tropical-wet-dry-savanna-coastal-min-17c-to-max-40c
+381,Tikamgarh,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+382,Tiruchirapalli A,Z13,Tropical Wet-Dry Savanna Hot Interior,≤48°C,tropical-wet-dry-savanna-hot-interior-min-11c-to-max-48c
+383,Tirumala,Z10,Tropical Mid-Elevation Monsoon,≤38°C,tropical-mid-elevation-monsoon-min-9c-to-max-38c
+384,Tirupati,Z18,Tropical Hot Semi-Arid,≤47°C,tropical-hot-semi-arid-min-14c-to-max-47c
+385,Tirupattur,Z12,Tropical Wet-Dry Savanna,≤40°C,tropical-wet-dry-savanna-min-11c-to-max-40c
+386,Tiruttani,Z12,Tropical Wet-Dry Savanna,≤40°C,tropical-wet-dry-savanna-min-11c-to-max-40c
+387,Titlagarh,Z12,Tropical Wet-Dry Savanna,≤40°C,tropical-wet-dry-savanna-min-11c-to-max-40c
+388,Tondi,Z14,Tropical Wet-Dry Savanna Coastal,≤40°C,tropical-wet-dry-savanna-coastal-min-17c-to-max-40c
+389,Tuni,Z14,Tropical Wet-Dry Savanna Coastal,≤40°C,tropical-wet-dry-savanna-coastal-min-17c-to-max-40c
+390,Udagamandalam,Z9,Cool Tropical Highland,≤33°C,cool-tropical-highland-min-5c-to-max-33c
+391,Udaipur A Dabok,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+392,Udgir,Z18,Tropical Hot Semi-Arid,≤47°C,tropical-hot-semi-arid-min-14c-to-max-47c
+393,Ujjain,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+394,Umaria,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+395,Una,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+396,Vadodara A,Z8,Subtropical Semi-Arid,≤44°C,subtropical-semi-arid-min-5c-to-max-44c
+397,Vallabh Vidyanagar,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+398,Valparai,Z10,Tropical Mid-Elevation Monsoon,≤38°C,tropical-mid-elevation-monsoon-min-9c-to-max-38c
+399,Valsad,Z7,Subtropical Humid,≤42°C,subtropical-humid-min-8c-to-max-42c
+400,Varanasi,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+401,Varanasi Babatpur,Z16,Subtropical Hot Semi-Arid Continental,≤48°C,subtropical-hot-semi-arid-continental-min-4c-to-max-48c
+402,Vellore,Z13,Tropical Wet-Dry Savanna Hot Interior,≤48°C,tropical-wet-dry-savanna-hot-interior-min-11c-to-max-48c
+403,Vengurla,Z11,Tropical Monsoon Coastal,≤38°C,tropical-monsoon-coastal-min-14c-to-max-38c
+404,Veraval,Z8,Subtropical Semi-Arid,≤44°C,subtropical-semi-arid-min-5c-to-max-44c
+405,Visakhapatnam,Z14,Tropical Wet-Dry Savanna Coastal,≤40°C,tropical-wet-dry-savanna-coastal-min-17c-to-max-40c
+406,Visakhapatnam A,Z14,Tropical Wet-Dry Savanna Coastal,≤40°C,tropical-wet-dry-savanna-coastal-min-17c-to-max-40c
+407,Wardha,Z13,Tropical Wet-Dry Savanna Hot Interior,≤48°C,tropical-wet-dry-savanna-hot-interior-min-11c-to-max-48c
+408,Yamunotri,Z1,Cold Alpine,≤20°C,cold-alpine-min-20c-to-max-20c
+409,Yavatmal,Z13,Tropical Wet-Dry Savanna Hot Interior,≤48°C,tropical-wet-dry-savanna-hot-interior-min-11c-to-max-48c
+410,Yumthang Valley,Z1,Cold Alpine,≤20°C,cold-alpine-min-20c-to-max-20c
+411,Zero Point,Z1,Cold Alpine,≤20°C,cold-alpine-min-20c-to-max-20c
+412,Dhanaulti,Z2,Cold Hills,≤25°C,cold-hills-min-5c-to-max-25c
+413,Khajjiar,Z2,Cold Hills,≤25°C,cold-hills-min-5c-to-max-25c
+414,Pelling,Z2,Cold Hills,≤25°C,cold-hills-min-5c-to-max-25c
+415,Kausani,Z2,Cold Hills,≤25°C,cold-hills-min-5c-to-max-25c
+416,Chakrata,Z2,Cold Hills,≤25°C,cold-hills-min-5c-to-max-25c
+417,Yuksom,Z2,Cold Hills,≤25°C,cold-hills-min-5c-to-max-25c
+418,Mussoorie,Z2,Cold Hills,≤25°C,cold-hills-min-5c-to-max-25c

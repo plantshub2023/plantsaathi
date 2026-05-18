@@ -75,7 +75,6 @@ const EXPERIENCE_OPTIONS = [
 const INITIAL_RESULT_COUNT = 10
 const RESULT_PAGE_SIZE     = 15
 const DETECT_TIMEOUT_MS    = 30_000   // spec says 3s but vision calls need ~5–15s
-const MIN_CONFIDENCE       = 70
 
 // Indexed lookup so the results page can hydrate AI ids back to full records.
 const PLANT_BY_ID = new Map(plantshubCatalogue.map(p => [p.id, p]))
@@ -142,15 +141,35 @@ Return JSON only (no commentary), with this exact shape:
 Sort by matchScore descending. Return 20-30 plants.`
 }
 
-const DETECT_PROMPT = `Look at this photo and identify the SPACE TYPE.
-Choose ONE from: indoor, balcony, window, outdoor.
+const DETECT_PROMPT = `Analyze both the SPACE TYPE and the LIGHTING CONDITION from this photo.
+
+SPACE TYPE — choose ONE from:
 - indoor: any interior room (living, bedroom, kitchen, bathroom, office)
 - balcony: open balcony with sky access
 - window: window sill (bright but still inside)
 - outdoor: terrace, garden, rooftop, courtyard
 
-Return JSON only:
-{ "spaceType": "indoor", "confidence": 95 }`
+LIGHTING CONDITION — consider direction of light source, brightness, shadows,
+time of day visible, presence of natural vs artificial light. The 'light' value
+MUST be one of the valid options for the detected space type:
+- indoor:  bright-indirect | medium | low | filtered
+- balcony: direct-sun | bright-indirect | morning-sun | afternoon-sun | mostly-shaded
+- window:  bright-indirect | morning-sun | afternoon-sun | medium
+- outdoor: direct-sun | morning-sun | afternoon-sun | bright-indirect | partial-shade
+
+lightConfidence:
+- 'high'   if light is clearly visible
+- 'medium' if partially visible
+- 'low'    if photo is dark, blurry, or unclear
+
+Return ONLY valid JSON. No markdown fences. No commentary.
+{
+  "space": "indoor",
+  "spaceLabel": "Indoor (living/bedroom)",
+  "light": "medium",
+  "lightLabel": "Medium (near window)",
+  "lightConfidence": "high"
+}`
 
 // TODO: Migrate Claude API calls to relative path '/api/claude-proxy.php'
 // + add a Vite dev proxy once a staging environment exists. 6 files
@@ -197,6 +216,14 @@ export default function FindPlants() {
   const [stockFilter,       setStockFilter]       = useState('all')
   const [visibleCount,      setVisibleCount]      = useState(INITIAL_RESULT_COUNT)
 
+  // AI light auto-detect — populated by continueWithPhoto when the AI
+  // returns a usable light reading. Drives Q3 pre-selection (CASE A) and
+  // the "couldn't auto-detect" fallback note (CASE B). All three reset
+  // together: on space change, new photo upload, skip, or chip ✏️.
+  const [detectedLight,      setDetectedLight]      = useState(null)
+  const [detectedLightLabel, setDetectedLightLabel] = useState(null)
+  const [lightConfidence,    setLightConfidence]    = useState(null)   // 'high' | 'medium' | 'low' | null
+
   const [answers, setAnswers] = useState({
     photo:           null,
     spaceType:       '',
@@ -205,8 +232,9 @@ export default function FindPlants() {
     experience:      '',
   })
 
-  const photoInputRef = useRef(null)
-  const toastTimerRef = useRef(null)
+  const cameraInputRef  = useRef(null)
+  const galleryInputRef = useRef(null)
+  const toastTimerRef   = useRef(null)
 
   // ─── Saved session ───────────────────────────────────────────────────────
   useEffect(() => {
@@ -236,6 +264,23 @@ export default function FindPlants() {
     }
   }, [currentStep, answers.spaceType])
 
+  // ─── Q3 pre-selection from AI (CASE A) ───────────────────────────────────
+  // When the user lands on Q3 with a usable AI light reading and hasn't
+  // already picked something, copy the AI choice into answers.lightCondition
+  // so the matching option renders as selected (and Continue is enabled).
+  // Guarded so re-renders don't fight a manual override.
+  useEffect(() => {
+    if (currentStep !== 3) return
+    if (!detectedLight) return
+    if (answers.lightCondition) return
+    const valid = getLightOptions(answers.spaceType).some(o => o.value === detectedLight)
+    if (!valid) return
+    setAnswers(a => ({ ...a, lightCondition: detectedLight }))
+    if (import.meta.env.DEV) {
+      console.log('🎯 [Q3] Pre-selected from AI:', detectedLight)
+    }
+  }, [currentStep, detectedLight, answers.spaceType, answers.lightCondition])
+
   // ─── Toast helper ────────────────────────────────────────────────────────
   function showToast(msg, ms = 4000) {
     setToast(msg)
@@ -253,18 +298,20 @@ export default function FindPlants() {
   }
   function select(field, value) {
     // Changing spaceType invalidates the previously picked lightCondition,
-    // because Q3 shows a different subset of options per space. Clear and
-    // tell the user — but only when an actual change happens and there
-    // was something to invalidate.
-    if (
-      field === 'spaceType' &&
-      answers.spaceType &&
-      answers.spaceType !== value &&
-      answers.lightCondition
-    ) {
-      const newLabel = SPACE_OPTIONS.find(o => o.value === value)?.label || value
-      showToast(`Light options updated for ${newLabel}`, 2000)
-      setAnswers(a => ({ ...a, spaceType: value, lightCondition: '' }))
+    // because Q3 shows a different subset of options per space. It also
+    // invalidates any AI-derived light reading (which was scored against
+    // the old space's option set). Clear both and tell the user.
+    if (field === 'spaceType' && answers.spaceType && answers.spaceType !== value) {
+      setDetectedLight(null)
+      setDetectedLightLabel(null)
+      setLightConfidence(null)
+      if (answers.lightCondition) {
+        const newLabel = SPACE_OPTIONS.find(o => o.value === value)?.label || value
+        showToast(`Light options updated for ${newLabel}`, 2000)
+        setAnswers(a => ({ ...a, spaceType: value, lightCondition: '' }))
+        return
+      }
+      setAnswers(a => ({ ...a, spaceType: value }))
       return
     }
     setAnswers(a => ({ ...a, [field]: value }))
@@ -291,13 +338,28 @@ export default function FindPlants() {
     }
     setAnswers(a => ({ ...a, photo: dataURL }))
     setSpaceAutoDetected(false)   // any previous detection no longer applies
+    setDetectedLight(null)
+    setDetectedLightLabel(null)
+    setLightConfidence(null)
   }
 
   function skipPhoto() {
     setPhotoSkipped(true)
     setSpaceAutoDetected(false)
+    setDetectedLight(null)
+    setDetectedLightLabel(null)
+    setLightConfidence(null)
     setAnswers(a => ({ ...a, photo: null }))
     setCurrentStep(2)
+  }
+
+  // ─── Light chip ✏️ — clear AI-derived light, prompt manual pick ──────────
+  function clearDetectedLight() {
+    setDetectedLight(null)
+    setDetectedLightLabel(null)
+    setLightConfidence(null)
+    setAnswers(a => ({ ...a, lightCondition: '' }))
+    showToast('Pick a light option below', 2000)
   }
 
   // ─── Space detection ─────────────────────────────────────────────────────
@@ -340,28 +402,69 @@ export default function FindPlants() {
         console.log('🤖 [4/6] AI raw response', apiData)
       }
 
-      const text   = apiData.content?.[0]?.text ?? ''
-      const parsed = extractJSON(text)
-      const space  = String(parsed.spaceType || '').trim().toLowerCase()
-      const conf   = Number(parsed.confidence)
+      const text       = apiData.content?.[0]?.text ?? ''
+      const parsed     = extractJSON(text)
+      const space      = String(parsed.space || parsed.spaceType || '').trim().toLowerCase()
+      const light      = String(parsed.light || '').trim().toLowerCase()
+      const lightLabel = String(parsed.lightLabel || '').trim()
+      const conf       = String(parsed.lightConfidence || '').trim().toLowerCase()
 
       if (import.meta.env.DEV) {
-        console.log('🤖 [5/6] Parsed space detection', {
-          rawText:    text,
+        console.log('🤖 [5/6] Parsed AI detection', {
+          rawText:         text,
           parsed,
           space,
-          confidence: conf,
-          validSpace: SPACE_VALUES.has(space),
-          meetsConf:  conf >= MIN_CONFIDENCE,
+          light,
+          lightLabel,
+          lightConfidence: conf,
+          validSpace:      SPACE_VALUES.has(space),
         })
       }
 
-      if (!SPACE_VALUES.has(space) || !(conf >= MIN_CONFIDENCE)) {
-        throw new Error('low-confidence')
+      if (!SPACE_VALUES.has(space)) {
+        throw new Error('invalid-space')
       }
+
+      // Validate light against the space's option set. CASE A needs valid
+      // light + confidence high/medium; otherwise CASE B (manual fallback).
+      const validLights = getLightOptions(space).map(o => o.value)
+      let acceptedLight      = null
+      let acceptedLightLabel = null
+      let acceptedConfidence = conf || 'low'
+
+      if (conf === 'low' || !validLights.includes(light)) {
+        if (import.meta.env.DEV) {
+          if (conf === 'low') {
+            console.warn('⚠️ [AI] Light confidence low — manual fallback')
+          } else {
+            console.warn('⚠️ [AI] Invalid light value for space — manual fallback', {
+              receivedLight: light,
+              space,
+              validOptions:  validLights,
+            })
+          }
+        }
+        acceptedConfidence = 'low'
+      } else {
+        acceptedLight      = light
+        acceptedLightLabel = lightLabel
+                          || LIGHT_OPTIONS.find(o => o.value === light)?.label
+                          || light
+        if (import.meta.env.DEV) {
+          console.log('💡 [AI] Light detected:', {
+            light:           acceptedLight,
+            lightLabel:      acceptedLightLabel,
+            lightConfidence: acceptedConfidence,
+          })
+        }
+      }
+
       setAnswers(a => ({ ...a, spaceType: space }))
       setSpaceAutoDetected(true)
       setPhotoSkipped(false)
+      setDetectedLight(acceptedLight)
+      setDetectedLightLabel(acceptedLightLabel)
+      setLightConfidence(acceptedConfidence)
       setCurrentStep(3)
     } catch (_err) {
       if (import.meta.env.DEV) {
@@ -464,6 +567,9 @@ export default function FindPlants() {
     setAnswers({ photo: null, spaceType: '', lightCondition: '', maintenance: '', experience: '' })
     setPhotoSkipped(false)
     setSpaceAutoDetected(false)
+    setDetectedLight(null)
+    setDetectedLightLabel(null)
+    setLightConfidence(null)
     setResults(null)
     setFromSavedSession(false)
     setError(null)
@@ -678,59 +784,104 @@ export default function FindPlants() {
 
   function StepPhoto() {
     const hasPhoto = !!answers.photo
+    const ctaBtn = {
+      flex:           1,
+      background:     '#fff',
+      color:          '#1D9E75',
+      border:         '2px solid #1D9E75',
+      borderRadius:   '12px',
+      padding:        '16px 20px',
+      fontSize:       '16px',
+      fontWeight:     600,
+      cursor:         'pointer',
+      display:        'flex',
+      alignItems:     'center',
+      justifyContent: 'center',
+      gap:            '8px',
+      fontFamily:     'var(--font-body)',
+    }
     return (
       <>
         <h1 style={questionH}>📸 Show me your space</h1>
         <p style={subtitle}>Upload a photo to auto-detect your space type (optional)</p>
-        <div
-          onClick={() => photoInputRef.current?.click()}
-          style={{
-            margin:       '0 16px',
-            padding:      hasPhoto ? '12px' : '40px 20px',
+
+        {hasPhoto && (
+          <div style={{
+            margin:       '0 16px 12px',
+            padding:      '12px',
             border:       '2px dashed #1D9E75',
             borderRadius: '16px',
             background:   '#F9FDFB',
             textAlign:    'center',
-            cursor:       'pointer',
-          }}
-        >
-          {hasPhoto ? (
-            <>
-              <img
-                src={answers.photo}
-                alt="Your space"
-                style={{
-                  maxHeight:    '300px',
-                  width:        '100%',
-                  objectFit:    'contain',
-                  borderRadius: '12px',
-                  display:      'block',
-                }}
-              />
-              <div style={{ fontSize: '13px', color: '#1D9E75', marginTop: '10px', fontWeight: 600 }}>
-                📷 Change photo
-              </div>
-            </>
-          ) : (
-            <>
-              <div style={{ fontSize: '48px', lineHeight: 1 }}>📷</div>
-              <div style={{ fontSize: '14px', color: '#1D9E75', marginTop: '12px', fontWeight: 600 }}>
-                Tap to upload or take photo
-              </div>
-              <div style={{ fontSize: '11px', color: '#888', marginTop: '4px' }}>
-                JPG, PNG, max 5 MB
-              </div>
-            </>
-          )}
+          }}>
+            <img
+              src={answers.photo}
+              alt="Your space"
+              style={{
+                maxHeight:    '300px',
+                width:        '100%',
+                objectFit:    'contain',
+                borderRadius: '12px',
+                display:      'block',
+              }}
+            />
+          </div>
+        )}
+
+        <div className="fp-upload-row" style={{
+          margin:  '0 16px',
+          display: 'flex',
+          gap:     '12px',
+        }}>
+          <button
+            type="button"
+            className="fp-upload-btn"
+            onClick={() => cameraInputRef.current?.click()}
+            style={ctaBtn}
+          >
+            <span style={{ fontSize: '20px', lineHeight: 1 }}>📷</span>
+            <span>{hasPhoto ? 'Retake' : 'Take Photo'}</span>
+          </button>
+          <button
+            type="button"
+            className="fp-upload-btn"
+            onClick={() => galleryInputRef.current?.click()}
+            style={ctaBtn}
+          >
+            <span style={{ fontSize: '20px', lineHeight: 1 }}>🖼️</span>
+            <span>{hasPhoto ? 'Replace' : 'Choose from Gallery'}</span>
+          </button>
         </div>
+
+        {!hasPhoto && (
+          <div style={{
+            fontSize:  '11px',
+            color:     '#888',
+            textAlign: 'center',
+            margin:    '10px 16px 0',
+          }}>
+            JPG, PNG, max 5 MB
+          </div>
+        )}
+
+        {/* Two hidden inputs: camera (rear cam on mobile) + gallery picker.
+            Both feed the same handler so detection + state-clearing is shared. */}
         <input
-          ref={photoInputRef}
+          ref={cameraInputRef}
           type="file"
           accept="image/*"
           capture="environment"
           onChange={handlePhoto}
           style={{ display: 'none' }}
         />
+        <input
+          ref={galleryInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handlePhoto}
+          style={{ display: 'none' }}
+        />
+
         <div style={footer}>
           <button style={btnSecondary} onClick={skipPhoto}>Skip</button>
           <button
@@ -784,6 +935,83 @@ export default function FindPlants() {
             onClick={currentStep === 5 ? submit : () => setCurrentStep(s => s + 1)}
           >
             {currentStep === 5 ? '✨ Find my plants' : 'Continue →'}
+          </button>
+        </div>
+      </>
+    )
+  }
+
+  // ─── Q3 (light) — dedicated renderer ─────────────────────────────────────
+  // Q3 has more moving parts than the generic StepWithGrid covers:
+  //  • Space chip (from AI space detection)
+  //  • Light chip (only when AI's light pick is currently the active answer)
+  //  • Banner above options — CASE A (✨ pre-selected) or CASE B (manual fallback)
+  // CASE C (no photo) renders nothing extra and falls through to the plain grid.
+  function StepLight() {
+    const lightOptions  = getLightOptions(answers.spaceType)
+    const enabled       = !!answers.lightCondition
+    const lightValid    = !!detectedLight && lightOptions.some(o => o.value === detectedLight)
+    const aiPickActive  = lightValid && answers.lightCondition === detectedLight
+    const showCaseBNote = !lightValid && lightConfidence === 'low' && !answers.lightCondition
+    return (
+      <>
+        <DetectionChip />
+        {aiPickActive && (
+          <div
+            onClick={clearDetectedLight}
+            style={{
+              display:      'inline-block',
+              background:   '#E8F5F0',
+              color:        '#1D9E75',
+              borderRadius: '16px',
+              padding:      '6px 12px',
+              fontSize:     '12px',
+              fontWeight:   600,
+              cursor:       'pointer',
+              margin:       '6px 0 0 16px',
+            }}
+          >
+            ☀️ Light: {detectedLightLabel || detectedLight} ✏️
+          </div>
+        )}
+        <h1 style={questionH}>☀️ How much light does the space get?</h1>
+        {aiPickActive && (
+          <div style={{
+            margin:       '0 16px 12px',
+            padding:      '10px 14px',
+            background:   '#E8F5F0',
+            color:        '#1D9E75',
+            borderRadius: '10px',
+            fontSize:     '12px',
+            fontWeight:   500,
+            lineHeight:   1.4,
+          }}>
+            ✨ Pre-selected from your photo — tap to change
+          </div>
+        )}
+        {showCaseBNote && (
+          <div style={{
+            margin:       '0 16px 12px',
+            padding:      '10px 14px',
+            background:   '#FFF4E5',
+            color:        '#B8860B',
+            borderRadius: '10px',
+            fontSize:     '12px',
+            fontWeight:   500,
+            lineHeight:   1.4,
+          }}>
+            Couldn&apos;t auto-detect light from photo — please select
+          </div>
+        )}
+        <OptionGrid field="lightCondition" options={lightOptions} columns={2} />
+        <div style={footer}>
+          <button style={btnSecondary} onClick={back}>← Back</button>
+          <button
+            style={btnPrimary(enabled)}
+            disabled={!enabled}
+            onClick={() => setCurrentStep(s => s + 1)}
+          >
+            Continue →
           </button>
         </div>
       </>
@@ -1195,13 +1423,20 @@ export default function FindPlants() {
           from { opacity: 0; transform: translateY(6px); }
           to   { opacity: 1; transform: translateY(0); }
         }
+        .fp-upload-btn:active {
+          background: #1D9E75 !important;
+          color: #fff !important;
+        }
+        @media (max-width: 480px) {
+          .fp-upload-row { flex-direction: column; }
+        }
       `}</style>
       <div key={currentStep} style={{ animation: 'findFadeIn 0.25s ease-out' }}>
         {currentStep === 1 && <StepPhoto />}
-        {currentStep === 2 && StepWithGrid('spaceType',      '🏠 Where will you keep the plant?', SPACE_OPTIONS, 2)}
-        {currentStep === 3 && StepWithGrid('lightCondition', '☀️ How much light does the space get?', getLightOptions(answers.spaceType), 2, true)}
-        {currentStep === 4 && StepWithList('maintenance',    '💧 How much time can you give?',    MAINTENANCE_OPTIONS)}
-        {currentStep === 5 && StepWithList('experience',     '🌱 How experienced are you?',       EXPERIENCE_OPTIONS)}
+        {currentStep === 2 && StepWithGrid('spaceType',   '🏠 Where will you keep the plant?', SPACE_OPTIONS, 2)}
+        {currentStep === 3 && StepLight()}
+        {currentStep === 4 && StepWithList('maintenance', '💧 How much time can you give?',    MAINTENANCE_OPTIONS)}
+        {currentStep === 5 && StepWithList('experience',  '🌱 How experienced are you?',       EXPERIENCE_OPTIONS)}
       </div>
 
       {toast && (

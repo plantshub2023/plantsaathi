@@ -65,6 +65,23 @@ function migratePlants(plants) {
   return { plants: migrated, changed }
 }
 
+// ─── User zone migration ─────────────────────────────────────────────────────
+// Z15 ("Tropical Semi-Arid") was retired in May 2026 — former Z15 cities
+// were redistributed to Z13 / Z18 / Z12 (see zones.js). Any user whose stored
+// zone is still 'Z15' is remapped to Z18 (the largest replacement bucket).
+// Idempotent — once user.zone !== 'Z15', subsequent calls return the user
+// untouched. Persistence is handled by the caller (see getUser below).
+
+function migrateUserZone(user) {
+  if (!user || user.zone !== 'Z15') return user
+  user.zone     = 'Z18'
+  user.zoneName = 'Tropical Hot Semi-Arid'
+  if (import.meta.env.DEV) {
+    console.log('🔄 Migrated user zone Z15 → Z18 (city:', user.city, ')')
+  }
+  return user
+}
+
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 
 export function useStorage() {
@@ -75,7 +92,12 @@ export function useStorage() {
 
   function getUser() {
     const data = localStorage.getItem('user');
-    return data ? JSON.parse(data) : null;
+    if (!data) return null;
+    const raw    = JSON.parse(data);
+    const wasZ15 = raw?.zone === 'Z15';
+    const user   = migrateUserZone(raw);
+    if (wasZ15) saveUser(user);   // persist migration so it only runs once per device
+    return user;
   }
 
   function hasUser() {

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStorage } from '../hooks/useStorage.js'
 import BottomNav from '../components/BottomNav.jsx'
-import { climateZones } from '../data/climateZones.js'
+import { climateZones, getZonesInDisplayOrder } from '../data/climateZones.js'
 import { plantFamilies } from '../data/plantFamilies.js'
 import usePageTitle from '../hooks/usePageTitle.js'
 
@@ -143,7 +143,7 @@ export default function Home() {
   // ─── Derived ─────────────────────────────────────────────────────────────
 
   const visibleZones = showAllZones
-    ? climateZones
+    ? getZonesInDisplayOrder()
     : TOP_CLIMATE_CODES
         .map(code => climateZones.find(z => z.code === code))
         .filter(Boolean)
