@@ -189,7 +189,7 @@ export default function Onboarding() {
     if (lat < 20 && lon > 72 && lon < 76)
       return ['Z11', 'Tropical Monsoon Coastal', 38]
     if (lat < 18 && lon > 77)
-      return ['Z14', 'Tropical WDS Coastal', 42]
+      return ['Z14', 'Tropical Wet-Dry Savanna Coastal', 42]
     if (lat < 20 && lon > 76 && lon < 80)
       return ['Z15', 'Tropical Semi-Arid', 48]
     if (lat > 25 && lon < 73)
@@ -197,14 +197,14 @@ export default function Onboarding() {
     if (lat > 20 && lat < 28 && lon > 68 && lon < 76)
       return ['Z8', 'Subtropical Semi-Arid', 44]
     if (lat > 18 && lat < 24 && lon > 77 && lon < 85)
-      return ['Z13', 'Tropical WDS Hot Interior', 48]
+      return ['Z13', 'Tropical Wet-Dry Savanna Hot Interior', 48]
     if (lat < 20 && lon > 74 && lon < 78)
       return ['Z18', 'Tropical Hot Semi-Arid', 46]
     if (lat < 18 && lon > 76 && lon < 80)
       return ['Z12', 'Tropical Wet-Dry Savanna', 40]
     if (lat > 24 && lon > 76 && lon < 88)
       return ['Z16', 'Subtropical Hot Semi-Arid Continental', 48]
-    return ['Z7', 'Humid Subtropical', 42]
+    return ['Z7', 'Subtropical Humid', 42]
   }
 
   function saveCustomLocation(placeName, displayName, lat, lon, zoneData) {
